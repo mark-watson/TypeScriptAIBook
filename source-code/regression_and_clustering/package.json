@@ -1,0 +1,15 @@
+{
+  "name": "regression-and-clustering",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "generate-data": "tsx generate_data.ts",
+    "regression": "tsx regression.ts",
+    "clustering": "tsx clustering.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  }
+}

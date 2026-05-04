@@ -1,0 +1,19 @@
+{
+  "name": "llm-public-apis",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "gemini": "tsx gemini_text.ts",
+    "openai": "tsx openai_text.ts",
+    "temperature": "tsx gemini_temperature.ts",
+    "thinking": "tsx gemini_thinking.ts",
+    "conversation": "tsx gemini_conversation.ts",
+    "image": "tsx gemini_image.ts",
+    "structured": "tsx gemini_structured.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "openai": "^4.77.0"
+  },
+  "devDependencies": { "typescript": "^5.7.0", "@types/node": "^22.0.0", "tsx": "^4.19.0" }
+}

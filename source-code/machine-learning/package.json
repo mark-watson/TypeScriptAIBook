@@ -1,0 +1,13 @@
+{
+  "name": "machine-learning",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "classify": "tsx classification.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0"
+  }
+}

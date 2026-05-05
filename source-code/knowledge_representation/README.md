@@ -2,6 +2,10 @@
 
 SPARQL queries (Wikidata, DBPedia) and SQLite knowledge base.
 
+## Architecture
+
+![Knowledge engine integrating DBpedia and Wikidata SPARQL endpoints with an in-memory SQLite knowledge graph](FIG_knowledge_representation.jpg)
+
 ## Setup
 
 ```bash

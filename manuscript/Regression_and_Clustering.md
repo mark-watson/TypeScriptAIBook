@@ -6,6 +6,9 @@ No external libraries are required for this chapter — we implement everything 
 
 The examples for this chapter are in the directory **source-code/regression_and_clustering**.
 
+{width: "80%"}
+![Architecture diagram for linear regression and K-Means clustering pipelines](FIG_regression_and_clustering.jpg)
+
 ## Regression: Predicting Housing Prices
 
 Regression is a type of supervised machine learning where the goal is to predict a continuous numerical value rather than a class label. While classification asks "which category?", regression asks "how much?" or "how many?"

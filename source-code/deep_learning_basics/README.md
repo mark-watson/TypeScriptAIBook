@@ -7,6 +7,10 @@ Simple neural network model for cancer prediction.
 - `../machine-learning/labeled_cancer_data.csv`
 - `../machine-learning/labeled_test_data.csv`
 
+## Architecture
+
+![TensorFlow.js neural network for Wisconsin cancer classification with training and evaluation pipeline](FIG_deep_learning_basics.jpg)
+
 ## Setup
 
 ```bash

@@ -2,6 +2,10 @@
 
 Examples using Google Gemini and OpenAI APIs.
 
+## Architecture
+
+![Google Gemini and OpenAI API integration with seven interaction modes including text, conversation, image, and structured output](FIG_llm_public_apis.jpg)
+
 ## Setup
 
 ```bash

@@ -20,6 +20,9 @@ We will use [TensorFlow.js](https://www.tensorflow.org/js) on Node.js to build a
 
 The examples for this chapter are in the directory **source-code/deep_learning_basics**.
 
+{width: "80%"}
+![Architecture diagram for TensorFlow.js cancer classification neural network](FIG_deep_learning_basics.jpg)
+
 The requirements for this chapter are:
 
 ```bash

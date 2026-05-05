@@ -2,6 +2,10 @@
 
 Q-Learning on Frozen Lake and Markov Decision Process (MDP) demonstrations.
 
+## Architecture
+
+![FrozenLake Q-Learning with epsilon-greedy exploration and MDP Value Iteration with Bellman equation](FIG_reinforcement_learning.jpg)
+
 ## Setup
 
 ```bash

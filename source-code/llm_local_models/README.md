@@ -12,6 +12,10 @@ ollama pull llama3.2:3b
 ollama pull deepseek-r1:7b   # for reasoning example
 ```
 
+## Architecture
+
+![Ollama local server with five TypeScript client patterns: text generation, streaming, reasoning, memory, and OpenAI compatibility](FIG_llm_local_models.jpg)
+
 ## Setup
 
 ```bash

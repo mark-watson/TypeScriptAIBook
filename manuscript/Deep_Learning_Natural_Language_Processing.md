@@ -24,6 +24,9 @@ npm install @huggingface/transformers
 
 The examples for this chapter are in the directory **source-code/deep_learning_nlp**.
 
+{width: "80%"}
+![Architecture diagram for Transformers.js NLP pipelines: summarization, classification, and similarity](FIG_deep_learning_nlp.jpg)
+
 All models will be downloaded automatically to **~/.cache/huggingface** the first time you run each script. Subsequent runs will use the cached models without re-downloading.
 
 ### Summarizing Text Using a Pre-trained Model on Your Laptop

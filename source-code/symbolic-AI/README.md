@@ -6,6 +6,10 @@ Frame-based knowledge representation and constraint programming with MiniZinc.
 
 For MiniZinc examples: `brew install minizinc`
 
+## Architecture
+
+![Frame-based knowledge system with hierarchical data structures and MiniZinc constraint solver for map coloring](FIG_symbolic-AI.jpg)
+
 ## Setup
 
 ```bash

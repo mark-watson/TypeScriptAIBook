@@ -6,6 +6,9 @@ No external libraries are required for this chapter — we implement Q-learning 
 
 The examples for this chapter are in the directory **source-code/reinforcement_learning**.
 
+{width: "80%"}
+![Architecture diagram for Q-Learning on FrozenLake and MDP Value Iteration](FIG_reinforcement_learning.jpg)
+
 ## Overview
 
 Reinforcement Learning is a type of machine learning that is concerned with decision-making in dynamic and uncertain environments. RL uses the concept of an agent which interacts with its environment by taking actions and receiving feedback in the form of rewards or penalties. The goal of the agent is to learn a policy which is a mapping from states of the environment to actions with the goal of maximizing the expected cumulative reward over time.

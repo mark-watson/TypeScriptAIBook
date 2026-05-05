@@ -8,6 +8,9 @@ I have never used deep learning image generation at work but I have fun experime
 
 The examples for this chapter are in the directory **source-code/deep_learning_image_generation**.
 
+{width: "80%"}
+![Architecture diagram for Hugging Face text-to-image generation pipeline](FIG_deep_learning_image_generation.jpg)
+
 ## Image Generation Using the Hugging Face Inference API
 
 While running full Stable Diffusion models locally in TypeScript is not yet as straightforward as in Python (due to the large model sizes and GPU requirements), the Hugging Face Inference API provides a clean way to generate images from text prompts using their hosted models. This approach sends your prompt to Hugging Face's servers and returns the generated image.

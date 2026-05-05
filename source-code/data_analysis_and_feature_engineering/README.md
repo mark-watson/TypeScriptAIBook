@@ -6,6 +6,10 @@ Exploratory Data Analysis (EDA) and feature engineering techniques.
 
 - `../regression_and_clustering/housing.csv`
 
+## Architecture
+
+![EDA and feature engineering pipeline with CSV ingestion, statistics, correlation analysis, and linear regression comparison](FIG_data_analysis_and_feature_engineering.jpg)
+
 ## Setup
 
 ```bash

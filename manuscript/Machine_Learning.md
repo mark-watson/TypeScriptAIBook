@@ -26,6 +26,9 @@ The only requirements for this chapter are Node.js and TypeScript — no externa
 
 The examples for this chapter are in the directory **source-code/machine-learning**.
 
+{width: "80%"}
+![Architecture diagram for KNN classification pipeline with feature scaling and evaluation](FIG_machine-learning.jpg)
+
 Please note that the content in this book is heavily influenced by what I use in my own work. I mostly use deep learning so its coverage comprises half this book. For this classic machine learning chapter I only use a classification model. I will not be covering regression or clustering models.
 
 We will use the same Wisconsin cancer dataset for both the following classification example and a deep learning classification example in a later chapter. Here are the first few rows of the file **labeled_cancer_data.csv**:

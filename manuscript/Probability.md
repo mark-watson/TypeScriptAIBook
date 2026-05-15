@@ -158,18 +158,11 @@ reliable individual prediction.
 The core data structure is an array of `{ hypothesis, probability }` objects. The constructor ensures priors sum to one:
 
 ```typescript
-export function makeBayesModel(
-  priors: Record<string, number>,
-): BayesModel {
+export function makeBayesModel(priors: Record<string, number>): BayesModel {
   const entries = Object.entries(priors);
-  const total = entries.reduce((sum, [, p]) => sum + p, 0);
-  if (total === 0) {
-    throw new Error("All priors are zero — cannot normalise.");
-  }
-  return entries.map(([hypothesis, p]) => ({
-    hypothesis,
-    probability: p / total,
-  }));
+  const total = entries.reduce((s, [, p]) => s + p, 0);
+  if (total === 0) throw new Error("All priors are zero — cannot normalise.");
+  return entries.map(([hypothesis, p]) => ({ hypothesis, probability: p / total }));
 }
 ```
 
@@ -178,24 +171,11 @@ export function makeBayesModel(
 The `update` function applies Bayes' Theorem. For each hypothesis it multiplies the prior by the likelihood of the observed evidence, then normalises:
 
 ```typescript
-export function update(
-  model: BayesModel,
-  likelihoodFn: LikelihoodFn,
-): BayesModel {
-  const unnormalised = model.map((entry) => ({
-    hypothesis: entry.hypothesis,
-    probability: likelihoodFn(entry.hypothesis) * entry.probability,
-  }));
-  const marginal = unnormalised.reduce((sum, e) => sum + e.probability, 0);
-  if (marginal === 0) {
-    throw new Error(
-      "Marginal likelihood is zero — evidence is impossible under all hypotheses.",
-    );
-  }
-  return unnormalised.map((e) => ({
-    hypothesis: e.hypothesis,
-    probability: e.probability / marginal,
-  }));
+export function update(model: BayesModel, likelihoodFn: LikelihoodFn): BayesModel {
+  const raw = model.map(e => ({ hypothesis: e.hypothesis, probability: likelihoodFn(e.hypothesis) * e.probability }));
+  const marginal = raw.reduce((s, e) => s + e.probability, 0);
+  if (marginal === 0) throw new Error("Marginal likelihood is zero — evidence impossible under all hypotheses.");
+  return raw.map(e => ({ hypothesis: e.hypothesis, probability: e.probability / marginal }));
 }
 ```
 
@@ -336,65 +316,33 @@ The normal CDF approximation is the most mathematically dense piece of the libra
 
 ```typescript
 export function phiApprox(z: number): number {
-  const p = 0.2316419;
-  const b1 = 0.31938153;
-  const b2 = -0.356563782;
-  const b3 = 1.781477937;
-  const b4 = -1.821255978;
-  const b5 = 1.330274429;
-
-  const az = Math.abs(z);
-  const tVal = 1.0 / (1.0 + p * az);
-  const pdf = Math.exp(-0.5 * az * az) / Math.sqrt(2.0 * Math.PI);
-  const cdf =
-    1.0 -
-    pdf *
-      (b1 * tVal +
-        b2 * tVal ** 2 +
-        b3 * tVal ** 3 +
-        b4 * tVal ** 4 +
-        b5 * tVal ** 5);
-
-  return z >= 0 ? cdf : 1.0 - cdf;
+  const [p, b1, b2, b3, b4, b5] = [0.2316419, 0.31938153, -0.356563782, 1.781477937, -1.821255978, 1.330274429];
+  const az = Math.abs(z), t = 1 / (1 + p * az);
+  const pdf = Math.exp(-0.5 * az * az) / Math.sqrt(2 * Math.PI);
+  const cdf = 1 - pdf * (b1 * t + b2 * t ** 2 + b3 * t ** 3 + b4 * t ** 4 + b5 * t ** 5);
+  return z >= 0 ? cdf : 1 - cdf;
 }
 ```
 
 The one-sample z-test for a proportion builds on this to answer "is the observed success rate significantly different from a hypothesised value?":
 
 ```typescript
-export function zTestProportion(
-  successes: number,
-  n: number,
-  hypothesisedP: number,
-): { z: number; pValue: number } {
-  const p0 = hypothesisedP;
-  const pHat = successes / n;
-  const se = Math.sqrt((p0 * (1 - p0)) / n);
-  const z = (pHat - p0) / se;
-  const pValue = Math.min(2.0 * (1.0 - phiApprox(Math.abs(z))), 1.0);
-  return { z, pValue };
+export function zTestProportion(successes: number, n: number, hypothesisedP: number) {
+  const se = Math.sqrt((hypothesisedP * (1 - hypothesisedP)) / n);
+  const z = (successes / n - hypothesisedP) / se;
+  return { z, pValue: Math.min(2 * (1 - phiApprox(Math.abs(z))), 1) };
 }
 ```
 
 The Wilson score confidence interval is more accurate than the simple Wald interval for extreme proportions:
 
 ```typescript
-export function confidenceIntervalProportion(
-  successes: number,
-  n: number,
-  confidence: number = 0.95,
-): { lower: number; upper: number } {
-  const p = successes / n;
-  const z = zCritical(confidence);
-  const z2 = z * z;
-  const denom = 1.0 + z2 / n;
-  const centre = (p + z2 / (2.0 * n)) / denom;
-  const margin =
-    (z * Math.sqrt((p * (1.0 - p)) / n + z2 / (4.0 * n * n))) / denom;
-  return {
-    lower: Math.max(0, centre - margin),
-    upper: Math.min(1, centre + margin),
-  };
+export function confidenceIntervalProportion(successes: number, n: number, confidence = 0.95) {
+  const p = successes / n, z = zCritical(confidence), z2 = z * z;
+  const denom = 1 + z2 / n;
+  const centre = (p + z2 / (2 * n)) / denom;
+  const margin = (z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denom;
+  return { lower: Math.max(0, centre - margin), upper: Math.min(1, centre + margin) };
 }
 ```
 

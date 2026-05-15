@@ -31,40 +31,24 @@ Let's query Wikidata for information about a specific person:
 ```typescript
 // wikidata_person.ts - Query Wikidata for information about a person
 
-async function sparqlQuery(
-  endpoint: string,
-  query: string
-): Promise<any> {
-  const url = `${endpoint}?query=${encodeURIComponent(query)}`;
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/sparql-results+json",
-      "User-Agent": "TypeScriptAIBook/1.0",
-    },
+async function sparqlQuery(endpoint: string, query: string) {
+  const resp = await fetch(`${endpoint}?query=${encodeURIComponent(query)}`, {
+    headers: { Accept: "application/sparql-results+json", "User-Agent": "TypeScriptAIBook/1.0" },
   });
-  if (!response.ok) {
-    throw new Error(`SPARQL query failed: ${response.status}`);
-  }
-  return response.json();
+  if (!resp.ok) throw new Error(`SPARQL query failed: ${resp.status}`);
+  return resp.json();
 }
 
-const query = `
-SELECT ?personLabel ?birthPlaceLabel ?birthDate ?occupationLabel
-WHERE {
+const results = await sparqlQuery("https://query.wikidata.org/sparql", `
+  SELECT ?personLabel ?birthPlaceLabel ?birthDate ?occupationLabel WHERE {
     ?person wdt:P31 wd:Q5 .
     ?person rdfs:label "Albert Einstein"@en .
     OPTIONAL { ?person wdt:P19 ?birthPlace . }
     OPTIONAL { ?person wdt:P569 ?birthDate . }
     OPTIONAL { ?person wdt:P106 ?occupation . }
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
-}
-LIMIT 10
-`;
-
-const results = await sparqlQuery(
-  "https://query.wikidata.org/sparql",
-  query
-);
+  } LIMIT 10
+`);
 
 for (const r of results.results.bindings) {
   console.log(`  Name: ${r.personLabel.value}`);
@@ -111,40 +95,32 @@ DBPedia mirrors much of Wikipedia's structured content as RDF triples. Here we q
 // dbpedia_cities.ts - Query DBPedia for city data
 
 const query = `
-SELECT ?city_uri ?dbpedia_label ?population ?country_label
-WHERE {
-    ?city_uri
-        <http://dbpedia.org/ontology/type>
-        <http://dbpedia.org/resource/City> .
-    ?city_uri
-        <http://dbpedia.org/property/populationEst>
-        ?population .
-    ?city_uri
-         <http://www.w3.org/2000/01/rdf-schema#label>
-         ?dbpedia_label FILTER (lang(?dbpedia_label) = 'en') .
-    OPTIONAL {
-        ?city_uri <http://dbpedia.org/ontology/country> ?country .
-        ?country <http://www.w3.org/2000/01/rdf-schema#label>
-                 ?country_label FILTER (lang(?country_label) = 'en') .
-    }
-}
-ORDER BY DESC(?population)
-LIMIT 10
-`;
+SELECT ?city_uri ?dbpedia_label ?population ?country_label WHERE {
+  ?city_uri <http://dbpedia.org/ontology/type> <http://dbpedia.org/resource/City> .
+  ?city_uri <http://dbpedia.org/property/populationEst> ?population .
+  ?city_uri <http://www.w3.org/2000/01/rdf-schema#label> ?dbpedia_label
+    FILTER (lang(?dbpedia_label) = 'en') .
+  OPTIONAL {
+    ?city_uri <http://dbpedia.org/ontology/country> ?country .
+    ?country <http://www.w3.org/2000/01/rdf-schema#label> ?country_label
+      FILTER (lang(?country_label) = 'en') .
+  }
+} ORDER BY DESC(?population) LIMIT 10`;
 
-const url = `http://dbpedia.org/sparql?query=${encodeURIComponent(query)}`;
-const response = await fetch(url, {
-  headers: {
-    Accept: "application/sparql-results+json",
-  },
-});
-const results = await response.json();
+try {
+  const resp = await fetch(`http://dbpedia.org/sparql?query=${encodeURIComponent(query)}`, {
+    headers: { Accept: "application/sparql-results+json" },
+  });
+  if (!resp.ok) throw new Error(`DBPedia query failed: ${resp.status}`);
+  const results = await resp.json();
 
-for (const r of results.results.bindings) {
-  const city = r.dbpedia_label.value;
-  const pop = parseInt(r.population.value).toLocaleString();
-  const country = r.country_label?.value ?? "unknown";
-  console.log(`  ${city} (${country}): population ${pop}`);
+  for (const r of results.results.bindings) {
+    const city = r.dbpedia_label.value;
+    const pop = parseInt(r.population.value).toLocaleString();
+    console.log(`  ${city} (${r.country_label?.value ?? "unknown"}): population ${pop}`);
+  }
+} catch (err) {
+  console.error("Error querying DBPedia:", err);
 }
 ```
 
@@ -172,133 +148,64 @@ import Database from "better-sqlite3";
 function buildKnowledgeBase(): Database.Database {
   const db = new Database(":memory:");
 
-  // Entity tables
   db.exec(`
-    CREATE TABLE scientists (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      birth_year INTEGER,
-      nationality TEXT
-    )
+    CREATE TABLE scientists (id INTEGER PRIMARY KEY, name TEXT NOT NULL, birth_year INTEGER, nationality TEXT);
+    CREATE TABLE fields (id INTEGER PRIMARY KEY, name TEXT NOT NULL, description TEXT);
+    CREATE TABLE discoveries (id INTEGER PRIMARY KEY, name TEXT NOT NULL, year INTEGER, description TEXT);
+    CREATE TABLE scientist_field (scientist_id INTEGER REFERENCES scientists(id), field_id INTEGER REFERENCES fields(id), PRIMARY KEY (scientist_id, field_id));
+    CREATE TABLE scientist_discovery (scientist_id INTEGER REFERENCES scientists(id), discovery_id INTEGER REFERENCES discoveries(id), PRIMARY KEY (scientist_id, discovery_id));
   `);
 
-  db.exec(`
-    CREATE TABLE fields (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      description TEXT
-    )
-  `);
+  const ins = (tbl: string, cols: number) =>
+    db.prepare(`INSERT INTO ${tbl} VALUES (${Array(cols).fill("?").join(",")})`);
 
-  db.exec(`
-    CREATE TABLE discoveries (
-      id INTEGER PRIMARY KEY,
-      name TEXT NOT NULL,
-      year INTEGER,
-      description TEXT
-    )
-  `);
+  const [iS, iF, iD, iSF, iSD] = [
+    ins("scientists", 4), ins("fields", 3), ins("discoveries", 4),
+    ins("scientist_field", 2), ins("scientist_discovery", 2),
+  ];
 
-  // Relationship tables
-  db.exec(`
-    CREATE TABLE scientist_field (
-      scientist_id INTEGER REFERENCES scientists(id),
-      field_id INTEGER REFERENCES fields(id),
-      PRIMARY KEY (scientist_id, field_id)
-    )
-  `);
+  iS.run(1, "Albert Einstein", 1879, "German");
+  iS.run(2, "Marie Curie", 1867, "Polish");
+  iS.run(3, "Richard Feynman", 1918, "American");
 
-  db.exec(`
-    CREATE TABLE scientist_discovery (
-      scientist_id INTEGER REFERENCES scientists(id),
-      discovery_id INTEGER REFERENCES discoveries(id),
-      PRIMARY KEY (scientist_id, discovery_id)
-    )
-  `);
+  iF.run(1, "Physics", "Study of matter, energy, and their interactions");
+  iF.run(2, "Chemistry", "Study of composition and properties of matter");
+  iF.run(3, "Quantum Mechanics", "Physics of atomic and subatomic systems");
 
-  // Populate with knowledge
-  const insertScientist = db.prepare(
-    "INSERT INTO scientists VALUES (?, ?, ?, ?)"
-  );
-  insertScientist.run(1, "Albert Einstein", 1879, "German");
-  insertScientist.run(2, "Marie Curie", 1867, "Polish");
-  insertScientist.run(3, "Richard Feynman", 1918, "American");
+  iD.run(1, "Special Relativity", 1905, "Time and space are relative");
+  iD.run(2, "Radioactivity", 1898, "Discovery of radium and polonium");
+  iD.run(3, "Quantum Electrodynamics", 1948, "Quantum theory of light and matter");
 
-  const insertField = db.prepare(
-    "INSERT INTO fields VALUES (?, ?, ?)"
-  );
-  insertField.run(1, "Physics", "Study of matter, energy, and their interactions");
-  insertField.run(2, "Chemistry", "Study of composition and properties of matter");
-  insertField.run(3, "Quantum Mechanics", "Physics of atomic and subatomic systems");
-
-  const insertDiscovery = db.prepare(
-    "INSERT INTO discoveries VALUES (?, ?, ?, ?)"
-  );
-  insertDiscovery.run(1, "Special Relativity", 1905, "Time and space are relative");
-  insertDiscovery.run(2, "Radioactivity", 1898, "Discovery of radium and polonium");
-  insertDiscovery.run(3, "Quantum Electrodynamics", 1948, "Quantum theory of light and matter");
-
-  const insertSF = db.prepare(
-    "INSERT INTO scientist_field VALUES (?, ?)"
-  );
-  insertSF.run(1, 1); insertSF.run(1, 3); // Einstein: Physics, QM
-  insertSF.run(2, 1); insertSF.run(2, 2); // Curie: Physics, Chemistry
-  insertSF.run(3, 1); insertSF.run(3, 3); // Feynman: Physics, QM
-
-  const insertSD = db.prepare(
-    "INSERT INTO scientist_discovery VALUES (?, ?)"
-  );
-  insertSD.run(1, 1); // Einstein -> Special Relativity
-  insertSD.run(2, 2); // Curie -> Radioactivity
-  insertSD.run(3, 3); // Feynman -> QED
+  iSF.run(1, 1); iSF.run(1, 3); iSF.run(2, 1); iSF.run(2, 2); iSF.run(3, 1); iSF.run(3, 3);
+  iSD.run(1, 1); iSD.run(2, 2); iSD.run(3, 3);
 
   return db;
 }
 
-function queryKnowledgeBase(db: Database.Database): void {
-  // Query 1: Who works in Quantum Mechanics?
+function queryKnowledgeBase(db: Database.Database) {
   console.log("Scientists in Quantum Mechanics:");
-  const qmScientists = db.prepare(`
-    SELECT s.name, s.nationality
-    FROM scientists s
+  for (const r of db.prepare(`
+    SELECT s.name, s.nationality FROM scientists s
     JOIN scientist_field sf ON s.id = sf.scientist_id
     JOIN fields f ON sf.field_id = f.id
     WHERE f.name = 'Quantum Mechanics'
-  `).all();
+  `).all() as any[]) console.log(`  ${r.name} (${r.nationality})`);
 
-  for (const row of qmScientists as any[]) {
-    console.log(`  ${row.name} (${row.nationality})`);
-  }
-
-  // Query 2: What did each scientist discover?
   console.log("\nDiscoveries by scientist:");
-  const discoveries = db.prepare(`
-    SELECT s.name, d.name AS discovery, d.year, d.description
-    FROM scientists s
+  for (const r of db.prepare(`
+    SELECT s.name, d.name AS discovery, d.year, d.description FROM scientists s
     JOIN scientist_discovery sd ON s.id = sd.scientist_id
-    JOIN discoveries d ON sd.discovery_id = d.id
-    ORDER BY d.year
-  `).all();
+    JOIN discoveries d ON sd.discovery_id = d.id ORDER BY d.year
+  `).all() as any[]) console.log(`  ${r.name}: ${r.discovery} (${r.year}) — ${r.description}`);
 
-  for (const row of discoveries as any[]) {
-    console.log(`  ${row.name}: ${row.discovery} (${row.year}) — ${row.description}`);
-  }
-
-  // Query 3: Which fields overlap between scientists?
   console.log("\nScientists who share a field:");
-  const shared = db.prepare(`
-    SELECT s1.name AS name1, s2.name AS name2, f.name AS field
-    FROM scientist_field sf1
-    JOIN scientist_field sf2 ON sf1.field_id = sf2.field_id
-                            AND sf1.scientist_id < sf2.scientist_id
+  for (const r of db.prepare(`
+    SELECT s1.name AS name1, s2.name AS name2, f.name AS field FROM scientist_field sf1
+    JOIN scientist_field sf2 ON sf1.field_id = sf2.field_id AND sf1.scientist_id < sf2.scientist_id
     JOIN scientists s1 ON sf1.scientist_id = s1.id
     JOIN scientists s2 ON sf2.scientist_id = s2.id
     JOIN fields f ON sf1.field_id = f.id
-  `).all();
-
-  for (const row of shared as any[]) {
-    console.log(`  ${row.name1} & ${row.name2}: ${row.field}`);
-  }
+  `).all() as any[]) console.log(`  ${r.name1} & ${r.name2}: ${r.field}`);
 }
 
 const db = buildKnowledgeBase();

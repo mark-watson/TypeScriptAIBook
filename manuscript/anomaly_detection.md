@@ -85,22 +85,11 @@ The `mu` field holds the per-feature means, `sigmaSq` holds the per-feature vari
 The `computeMu` function calculates the average value of each feature across all training examples:
 
 ```typescript
-export function computeMu(
-  examples: number[][],
-  numFeatures: number,
-): number[] {
-  const n = examples.length;
-  const mu = new Array(numFeatures).fill(0);
-  if (n === 0) return mu;
-
-  for (const ex of examples) {
-    for (let f = 0; f < numFeatures; f++) {
-      mu[f] += ex[f];
-    }
-  }
-  for (let f = 0; f < numFeatures; f++) {
-    mu[f] /= n;
-  }
+export function computeMu(examples: number[][], nf: number): number[] {
+  const mu = new Array(nf).fill(0);
+  if (!examples.length) return mu;
+  for (const ex of examples) for (let f = 0; f < nf; f++) mu[f] += ex[f];
+  for (let f = 0; f < nf; f++) mu[f] /= examples.length;
   return mu;
 }
 ```
@@ -110,23 +99,14 @@ This is straightforward: sum all values for each feature, then divide by the num
 The `computeSigmaSq` function calculates the variance — how much each feature's values deviate from the mean:
 
 ```typescript
-export function computeSigmaSq(
-  examples: number[][],
-  mu: number[],
-  numFeatures: number,
-): number[] {
-  const n = examples.length;
-  const sigmaSq = new Array(numFeatures).fill(0);
-
-  for (let f = 0; f < numFeatures - 1; f++) {
+export function computeSigmaSq(examples: number[][], mu: number[], nf: number): number[] {
+  const s2 = new Array(nf).fill(0);
+  for (let f = 0; f < nf - 1; f++) {
     let sum = 0;
-    for (const ex of examples) {
-      const diff = ex[f] - mu[f];
-      sum += diff * diff;
-    }
-    sigmaSq[f] = Math.max(sum / n, 1e-10);
+    for (const ex of examples) { const d = ex[f] - mu[f]; sum += d * d; }
+    s2[f] = Math.max(sum / examples.length, 1e-10);
   }
-  return sigmaSq;
+  return s2;
 }
 ```
 
@@ -139,21 +119,13 @@ The heart of the algorithm is the `gaussianP` function. For a given data sample,
 ```typescript
 const SQRT_2_PI = Math.sqrt(2 * Math.PI);
 
-export function gaussianP(
-  x: number[],
-  mu: number[],
-  sigmaSq: number[],
-  numFeatures: number,
-): number {
+export function gaussianP(x: number[], mu: number[], sigmaSq: number[], nf: number): number {
   let sum = 0;
-  for (let f = 0; f < numFeatures - 1; f++) {
-    const s2 = sigmaSq[f];
-    const sigma = Math.sqrt(s2);
-    const diff = x[f] - mu[f];
-    const exponent = -(diff * diff) / (2 * s2);
-    sum += (1 / (SQRT_2_PI * sigma)) * Math.exp(exponent);
+  for (let f = 0; f < nf - 1; f++) {
+    const s2 = sigmaSq[f], d = x[f] - mu[f];
+    sum += (1 / (SQRT_2_PI * Math.sqrt(s2))) * Math.exp(-(d * d) / (2 * s2));
   }
-  return sum / numFeatures;
+  return sum / nf;
 }
 ```
 
@@ -173,26 +145,16 @@ The `train` function searches for the best epsilon threshold:
 
 ```typescript
 export function train(det: Detector): Detector {
-  let bestErr = 1e10;
-  let bestE = 0.001;
-
+  let bestErr = 1e10, bestE = 0.001;
   for (let i = 0; i < 200; i++) {
     const eps = 0.001 + 0.005 * i;
     const err = trainHelper(det, eps);
-    if (err <= bestErr) {
-      bestErr = err;
-      bestE = eps;
-    }
+    if (err <= bestErr) { bestErr = err; bestE = eps; }
   }
-
   console.log(`\n**** Best epsilon = ${bestE.toFixed(4)}`);
   det.bestEps = bestE;
-
-  // Retrain with best epsilon to set sigmaSq
   trainHelper(det, bestE);
-  // Evaluate on test set
   testModel(det, bestE);
-
   return det;
 }
 ```
@@ -203,22 +165,13 @@ The `trainHelper` function does one pass: it computes the variance from the trai
 
 ```typescript
 function trainHelper(det: Detector, epsilon: number): number {
-  const { numFeatures, training, mu, crossValidation } = det;
-  const s2 = computeSigmaSq(training, mu, numFeatures);
-  det.sigmaSq = s2;
-
+  const { numFeatures: nf, training, mu, crossValidation } = det;
+  det.sigmaSq = computeSigmaSq(training, mu, nf);
   let errors = 0;
   for (const x of crossValidation) {
-    const prob = gaussianP(x, mu, s2, numFeatures);
-    const target = x[numFeatures - 1];
-
-    if (target > 0.5) {
-      // actual anomaly — error if model says normal
-      if (prob > epsilon) errors++;
-    } else {
-      // actual normal — error if model says anomaly
-      if (prob < epsilon) errors++;
-    }
+    const prob = gaussianP(x, mu, det.sigmaSq, nf);
+    const anomaly = x[nf - 1] > 0.5;
+    if (anomaly ? prob > epsilon : prob < epsilon) errors++;
   }
   return errors;
 }
@@ -233,34 +186,23 @@ The `testModel` function evaluates the trained detector on held-out test data an
 - **F1 score** — the harmonic mean of precision and recall. An F1 of 1.0 means perfect detection with no false alarms.
 
 ```typescript
-export function testModel(
-  det: Detector,
-  epsilon: number,
-): { precision: number; recall: number; f1: number } {
-  const { numFeatures, mu, sigmaSq, testing } = det;
+export function testModel(det: Detector, epsilon: number) {
+  const { numFeatures: nf, mu, sigmaSq, testing } = det;
   let tp = 0, fp = 0, fn = 0, tn = 0;
-
   for (const x of testing) {
-    const prob = gaussianP(x, mu, sigmaSq, numFeatures);
-    const target = x[numFeatures - 1];
-
-    if (target > 0.5) {
-      if (prob > epsilon) fn++;
-      else tp++;
-    } else {
-      if (prob < epsilon) fp++;
-      else tn++;
-    }
+    const prob = gaussianP(x, mu, sigmaSq, nf);
+    const anomaly = x[nf - 1] > 0.5;
+    if (anomaly) { prob > epsilon ? fn++ : tp++; }
+    else { prob < epsilon ? fp++ : tn++; }
   }
-
   const precision = tp + fp === 0 ? 0 : tp / (tp + fp);
   const recall = tp + fn === 0 ? 0 : tp / (tp + fn);
-  const f1 =
-    precision + recall === 0
-      ? 0
-      : (2 * precision * recall) / (precision + recall);
+  const f1 = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
 
-  // ... print results ...
+  console.log(`\n -- best epsilon = ${epsilon.toFixed(4)}`);
+  console.log(` -- test examples  = ${testing.length}`);
+  console.log(` -- TP=${tp} FP=${fp} FN=${fn} TN=${tn}`);
+  console.log(` -- precision=${precision.toFixed(4)} recall=${recall.toFixed(4)} F1=${f1.toFixed(4)}`);
   return { precision, recall, f1 };
 }
 ```
@@ -271,36 +213,17 @@ The `preprocessWisconsin` function in `wisconsin_demo.ts` transforms the raw CSV
 
 ```typescript
 function preprocessWisconsin(rows: number[][]): number[][] {
-  return rows.map((row) => {
-    const xs = [...row];
-
-    // Scale raw features (1–10) by 0.1 → [0.1, 1.0]
-    for (let i = 0; i < 9; i++) {
-      xs[i] *= 0.1;
-    }
-
-    // Log transform to push distribution toward bell shape
-    let mn = 1e6;
-    let mx = -1e6;
+  return rows.map(row => {
+    const xs = row.map((v, i) => i < 9 ? v * 0.1 : v);
+    let mn = Infinity, mx = -Infinity;
     for (let i = 0; i < 9; i++) {
       xs[i] = Math.log(xs[i] + 1.2);
       if (xs[i] < mn) mn = xs[i];
       if (xs[i] > mx) mx = xs[i];
     }
-
-    // Per-row min-max normalise to [0, 1]
     const range = mx - mn;
-    if (range < 1e-10) {
-      for (let i = 0; i < 9; i++) xs[i] = 0.5;
-    } else {
-      for (let i = 0; i < 9; i++) {
-        xs[i] = (xs[i] - mn) / range;
-      }
-    }
-
-    // Remap target: {2, 4} → {0, 1}
+    for (let i = 0; i < 9; i++) xs[i] = range < 1e-10 ? 0.5 : (xs[i] - mn) / range;
     xs[9] = (xs[9] - 2.0) * 0.5;
-
     return xs;
   });
 }

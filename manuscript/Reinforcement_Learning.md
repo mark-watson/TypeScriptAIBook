@@ -49,94 +49,55 @@ We implement value iteration for a simple 3×3 grid world:
 // mdp_demo.ts - Markov Decision Process with Value Iteration
 
 function valueIteration(
-  nStates: number,
-  nActions: number,
-  P: number[][][],    // P[action][state][nextState] = probability
-  R: number[][],       // R[state][action] = reward
-  gamma: number = 0.9,
-  threshold: number = 1e-6
-): { policy: number[]; V: number[]; iterations: number } {
-  let V = new Array(nStates).fill(0);
-  let policy = new Array(nStates).fill(0);
-  let iterations = 0;
-
+  nS: number, nA: number,
+  P: number[][][], R: number[][],
+  gamma = 0.9, threshold = 1e-6,
+) {
+  let V = new Array(nS).fill(0), policy = new Array(nS).fill(0), iterations = 0;
   while (true) {
     iterations++;
-    const newV = new Array(nStates).fill(0);
+    const newV = new Array(nS).fill(0);
     let maxDelta = 0;
-
-    for (let s = 0; s < nStates; s++) {
-      let bestValue = -Infinity;
-      let bestAction = 0;
-
-      for (let a = 0; a < nActions; a++) {
-        let value = R[s][a];
-        for (let sp = 0; sp < nStates; sp++) {
-          value += gamma * P[a][s][sp] * V[sp];
-        }
-        if (value > bestValue) {
-          bestValue = value;
-          bestAction = a;
-        }
+    for (let s = 0; s < nS; s++) {
+      let bestVal = -Infinity, bestA = 0;
+      for (let a = 0; a < nA; a++) {
+        let val = R[s][a];
+        for (let sp = 0; sp < nS; sp++) val += gamma * P[a][s][sp] * V[sp];
+        if (val > bestVal) { bestVal = val; bestA = a; }
       }
-      newV[s] = bestValue;
-      policy[s] = bestAction;
+      newV[s] = bestVal; policy[s] = bestA;
       maxDelta = Math.max(maxDelta, Math.abs(newV[s] - V[s]));
     }
-
     V = newV;
     if (maxDelta < threshold) break;
   }
-
   return { policy, V, iterations };
 }
 
-// --- Example: 3×3 Grid World ---
-const nStates = 9;
-const nActions = 4; // up, right, down, left
+// --- 3×3 Grid World ---
+const [nS, nA] = [9, 4];
+const P = Array.from({ length: nA }, () => Array.from({ length: nS }, () => new Array(nS).fill(0)));
+const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 
-// Build transition matrix
-const P: number[][][] = Array.from({ length: nActions },
-  () => Array.from({ length: nStates },
-    () => new Array(nStates).fill(0)));
-
-const grid = Array.from({ length: 3 }, (_, r) =>
-  Array.from({ length: 3 }, (_, c) => r * 3 + c));
-
-const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]]; // up, right, down, left
-
-for (let s = 0; s < nStates; s++) {
-  const r = Math.floor(s / 3);
-  const c = s % 3;
-  for (let a = 0; a < nActions; a++) {
-    const [dr, dc] = directions[a];
-    const nr = r + dr;
-    const nc = c + dc;
-    const ns = (nr >= 0 && nr < 3 && nc >= 0 && nc < 3) ? nr * 3 + nc : s;
-    P[a][s][ns] = 1.0;
+for (let s = 0; s < nS; s++) {
+  const [r, c] = [Math.floor(s / 3), s % 3];
+  for (let a = 0; a < nA; a++) {
+    const nr = r + dirs[a][0], nc = c + dirs[a][1];
+    P[a][s][(nr >= 0 && nr < 3 && nc >= 0 && nc < 3) ? nr * 3 + nc : s] = 1;
   }
 }
 
-// Rewards: +10 for goal (state 8), -5 for trap (state 5)
-const R: number[][] = Array.from({ length: nStates },
-  () => new Array(nActions).fill(0));
-for (let a = 0; a < nActions; a++) {
-  R[8][a] = 10.0;
-  R[5][a] = -5.0;
-}
+const R = Array.from({ length: nS }, () => new Array(nA).fill(0));
+for (let a = 0; a < nA; a++) { R[8][a] = 10; R[5][a] = -5; }
 
-const result = valueIteration(nStates, nActions, P, R, 0.9);
+const { policy, V, iterations } = valueIteration(nS, nA, P, R, 0.9);
 const arrows = ["↑", "→", "↓", "←"];
 
-console.log("=== Custom 3×3 Grid World ===");
-console.log("Optimal policy:");
-for (let r = 0; r < 3; r++) {
-  const row = Array.from({ length: 3 },
-    (_, c) => `  ${arrows[result.policy[r * 3 + c]]}  `).join("");
-  console.log(row);
-}
-console.log(`\nValue function: [${result.V.map(v => v.toFixed(2)).join(", ")}]`);
-console.log(`Iterations: ${result.iterations}`);
+console.log("=== Custom 3×3 Grid World ===\nOptimal policy:");
+for (let r = 0; r < 3; r++)
+  console.log(Array.from({ length: 3 }, (_, c) => `  ${arrows[policy[r * 3 + c]]}  `).join(""));
+console.log(`\nValue function: [${V.map(v => v.toFixed(2)).join(", ")}]`);
+console.log(`Iterations: ${iterations}`);
 ```
 
 ## A Concrete Example: Q-Learning
@@ -150,138 +111,68 @@ Q(s,a) ← Q(s,a) + α [ r + γ · max_a' Q(s',a') — Q(s,a) ]
 We implement a FrozenLake-style environment and Q-learning agent entirely in TypeScript:
 
 ```typescript
-// frozen_lake_qlearning.ts - Q-Learning from scratch
+// frozen_lake_qlearning.ts - Q-Learning on FrozenLake from scratch
 
 class FrozenLake {
-  private size = 4;
-  private map: string[];
   private state = 0;
-  public nStates = 16;
-  public nActions = 4;
+  private map = ["S","F","F","F", "F","H","F","H", "F","F","F","H", "H","F","F","G"];
+  nStates = 16; nActions = 4;
 
-  constructor(private isSlippery: boolean = true) {
-    this.map = [
-      "S", "F", "F", "F",   // S=start, F=frozen
-      "F", "H", "F", "H",   // H=hole
-      "F", "F", "F", "H",
-      "H", "F", "F", "G",   // G=goal
-    ];
-  }
+  constructor(private slippery = true) {}
+  reset() { return this.state = 0; }
 
-  reset(): number {
-    this.state = 0;
-    return this.state;
-  }
-
-  step(action: number): {
-    nextState: number; reward: number; done: boolean
-  } {
-    let actualAction = action;
-    if (this.isSlippery && Math.random() < 0.667) {
-      // Slip: 1/3 chance of intended direction,
-      // 1/3 each for perpendicular
-      const slip = Math.random() < 0.5 ? -1 : 1;
-      actualAction = (action + slip + 4) % 4;
-    }
-
-    const r = Math.floor(this.state / this.size);
-    const c = this.state % this.size;
+  step(action: number) {
+    let a = action;
+    if (this.slippery && Math.random() < 0.667) a = (action + (Math.random() < 0.5 ? -1 : 1) + 4) % 4;
+    const [r, c] = [Math.floor(this.state / 4), this.state % 4];
     const dirs = [[-1, 0], [0, 1], [1, 0], [0, -1]];
-    const [dr, dc] = dirs[actualAction];
-    const nr = Math.max(0, Math.min(this.size - 1, r + dr));
-    const nc = Math.max(0, Math.min(this.size - 1, c + dc));
-    this.state = nr * this.size + nc;
-
+    const nr = Math.max(0, Math.min(3, r + dirs[a][0]));
+    const nc = Math.max(0, Math.min(3, c + dirs[a][1]));
+    this.state = nr * 4 + nc;
     const cell = this.map[this.state];
-    const done = cell === "H" || cell === "G";
-    const reward = cell === "G" ? 1.0 : 0.0;
-
-    return { nextState: this.state, reward, done };
+    return { nextState: this.state, reward: cell === "G" ? 1.0 : 0.0, done: cell === "H" || cell === "G" };
   }
 }
 
-function qLearning(
-  env: FrozenLake,
-  episodes: number = 10000,
-  alpha: number = 0.1,
-  gamma: number = 0.99,
-  epsilon: number = 1.0,
-  epsilonDecay: number = 0.999,
-  minEpsilon: number = 0.01
-): number[][] {
-  const Q: number[][] = Array.from({ length: env.nStates },
-    () => new Array(env.nActions).fill(0));
-
-  for (let ep = 0; ep < episodes; ep++) {
-    let state = env.reset();
-    let done = false;
-    let steps = 0;
-
-    while (!done && steps < 100) {
-      // Epsilon-greedy action selection
-      const action = Math.random() < epsilon
-        ? Math.floor(Math.random() * env.nActions)
-        : Q[state].indexOf(Math.max(...Q[state]));
-
-      const { nextState, reward, done: d } = env.step(action);
-      done = d;
-
-      const bestNext = Math.max(...Q[nextState]);
-      Q[state][action] += alpha * (
-        reward + gamma * bestNext - Q[state][action]
-      );
-
-      state = nextState;
-      steps++;
-    }
-
-    epsilon = Math.max(minEpsilon, epsilon * epsilonDecay);
-
-    if ((ep + 1) % 1000 === 0) {
-      const rate = evaluate(env, Q);
-      console.log(
-        `  Episode ${String(ep + 1).padStart(5)}: success rate = ${rate.toFixed(2)}`
-      );
+function evaluate(env: FrozenLake, Q: number[][], episodes = 100) {
+  let wins = 0;
+  for (let i = 0; i < episodes; i++) {
+    let s = env.reset(), done = false, steps = 0;
+    while (!done && steps++ < 100) {
+      const a = Q[s].indexOf(Math.max(...Q[s]));
+      const r = env.step(a);
+      s = r.nextState; done = r.done;
+      if (done && r.reward === 1) wins++;
     }
   }
+  return wins / episodes;
+}
 
+function qLearning(env: FrozenLake, episodes = 10000, alpha = 0.1, gamma = 0.99, eps = 1.0, decay = 0.999, minEps = 0.01) {
+  const Q = Array.from({ length: env.nStates }, () => new Array(env.nActions).fill(0));
+  for (let ep = 0; ep < episodes; ep++) {
+    let s = env.reset(), done = false, steps = 0;
+    while (!done && steps++ < 100) {
+      const a = Math.random() < eps ? Math.floor(Math.random() * env.nActions) : Q[s].indexOf(Math.max(...Q[s]));
+      const { nextState, reward, done: d } = env.step(a);
+      done = d;
+      Q[s][a] += alpha * (reward + gamma * Math.max(...Q[nextState]) - Q[s][a]);
+      s = nextState;
+    }
+    eps = Math.max(minEps, eps * decay);
+    if ((ep + 1) % 1000 === 0) console.log(`  Episode ${String(ep + 1).padStart(5)}: success = ${evaluate(env, Q).toFixed(2)}`);
+  }
   return Q;
 }
 
-function evaluate(env: FrozenLake, Q: number[][], episodes = 100): number {
-  let successes = 0;
-  for (let i = 0; i < episodes; i++) {
-    let state = env.reset();
-    let done = false;
-    let steps = 0;
-    while (!done && steps < 100) {
-      const action = Q[state].indexOf(Math.max(...Q[state]));
-      const result = env.step(action);
-      state = result.nextState;
-      done = result.done;
-      if (done && result.reward === 1.0) successes++;
-      steps++;
-    }
-  }
-  return successes / episodes;
-}
-
-// --- Main ---
-console.log("=== Q-Learning on FrozenLake (slippery) ===");
 const env = new FrozenLake(true);
-console.log(`States: ${env.nStates}, Actions: ${env.nActions}\n`);
-console.log("Training:");
+console.log(`=== Q-Learning on FrozenLake ===\nStates: ${env.nStates}, Actions: ${env.nActions}\n\nTraining:`);
 const Q = qLearning(env);
 
 const arrows = ["↑", "→", "↓", "←"];
 console.log("\nLearned policy:");
-for (let r = 0; r < 4; r++) {
-  const row = Array.from({ length: 4 }, (_, c) => {
-    const s = r * 4 + c;
-    return arrows[Q[s].indexOf(Math.max(...Q[s]))];
-  }).join("");
-  console.log(`  ${row}`);
-}
+for (let r = 0; r < 4; r++)
+  console.log("  " + Array.from({ length: 4 }, (_, c) => arrows[Q[r * 4 + c].indexOf(Math.max(...Q[r * 4 + c]))]).join(""));
 
 const finalRate = evaluate(env, Q, 1000);
 console.log(`\nFinal success rate (1000 episodes): ${finalRate.toFixed(2)}`);

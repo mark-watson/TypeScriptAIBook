@@ -47,35 +47,18 @@ import * as tf from "@tensorflow/tfjs-node";
 import { readFileSync } from "node:fs";
 
 function loadData() {
-  const parseCSV = (path: string) => {
-    const content = readFileSync(path, "utf-8");
-    return content.trim().split("\n").slice(1)
-      .map(line => line.split(",").map(Number));
-  };
+  const parse = (p: string) => readFileSync(p, "utf-8").trim().split("\n").slice(1).map(l => l.split(",").map(Number));
+  const train = parse("../machine-learning/labeled_cancer_data.csv");
+  const test = parse("../machine-learning/labeled_test_data.csv");
+  const [xTrain, yTrain] = [train.map(r => r.slice(0, 9)), train.map(r => [r[r.length - 1]])];
+  const [xTest, yTest] = [test.map(r => r.slice(0, 9)), test.map(r => [r[r.length - 1]])];
 
-  const train = parseCSV("../machine-learning/labeled_cancer_data.csv");
-  const test = parseCSV("../machine-learning/labeled_test_data.csv");
-
-  const xTrain = train.map(row => row.slice(0, 9));
-  const yTrain = train.map(row => [row[row.length - 1]]);
-  const xTest = test.map(row => row.slice(0, 9));
-  const yTest = test.map(row => [row[row.length - 1]]);
-
-  // Scale features using training data statistics
-  const xTrainTensor = tf.tensor2d(xTrain);
-  const mean = xTrainTensor.mean(0);
-  const std = xTrainTensor.sub(mean).square().mean(0).sqrt();
-
-  const xTrainScaled = xTrainTensor.sub(mean).div(std);
-  const xTestScaled = tf.tensor2d(xTest).sub(mean).div(std);
-
+  const xT = tf.tensor2d(xTrain);
+  const mean = xT.mean(0), std = xT.sub(mean).square().mean(0).sqrt().add(tf.scalar(1e-8));
   return {
-    xTrain: xTrainScaled,
-    yTrain: tf.tensor2d(yTrain),
-    xTest: xTestScaled,
-    yTest: tf.tensor2d(yTest),
-    numTrain: xTrain.length,
-    numTest: xTest.length,
+    xTrain: xT.sub(mean).div(std), yTrain: tf.tensor2d(yTrain),
+    xTest: tf.tensor2d(xTest).sub(mean).div(std), yTest: tf.tensor2d(yTest),
+    numTrain: xTrain.length, numTest: xTest.length, yTestRaw: yTest.map(r => r[0]),
   };
 }
 ```
@@ -85,33 +68,13 @@ function loadData() {
 In TensorFlow.js, we define neural network architectures using the Sequential API. Our network has two hidden layers of 15 neurons with ReLU activation, a dropout layer for regularization, and a single output neuron:
 
 ```typescript
-function buildModel(): tf.Sequential {
+function buildModel() {
   const model = tf.sequential();
-
-  model.add(tf.layers.dense({
-    inputShape: [9],
-    units: 15,
-    activation: "relu",
-  }));
-
-  model.add(tf.layers.dense({
-    units: 15,
-    activation: "relu",
-  }));
-
+  model.add(tf.layers.dense({ inputShape: [9], units: 15, activation: "relu" }));
+  model.add(tf.layers.dense({ units: 15, activation: "relu" }));
   model.add(tf.layers.dropout({ rate: 0.2 }));
-
-  model.add(tf.layers.dense({
-    units: 1,
-    activation: "sigmoid",
-  }));
-
-  model.compile({
-    optimizer: tf.train.sgd(0.01),
-    loss: "binaryCrossentropy",
-    metrics: ["accuracy"],
-  });
-
+  model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }));
+  model.compile({ optimizer: tf.train.sgd(0.01), loss: "binaryCrossentropy", metrics: ["accuracy"] });
   return model;
 }
 ```
@@ -121,27 +84,16 @@ function buildModel(): tf.Sequential {
 TensorFlow.js handles training with the `model.fit()` method, which manages batching, gradient computation, and weight updates:
 
 ```typescript
-async function trainModel(
-  model: tf.Sequential,
-  xTrain: tf.Tensor,
-  yTrain: tf.Tensor
-): Promise<void> {
-  const history = await model.fit(xTrain, yTrain, {
-    epochs: 60,
-    batchSize: 32,
-    verbose: 0,
-    callbacks: {
-      onEpochEnd: (epoch, logs) => {
-        if ((epoch + 1) % 10 === 0) {
-          console.log(
-            `  Epoch ${String(epoch + 1).padStart(3)}/60` +
-            `  loss: ${logs?.loss?.toFixed(4)}`
-          );
-        }
-      },
+console.log("\nTraining:");
+await model.fit(xTrain, yTrain, {
+  epochs: 60, batchSize: 32, verbose: 0,
+  callbacks: {
+    onEpochEnd: (ep, logs) => {
+      if ((ep + 1) % 10 === 0)
+        console.log(`  Epoch ${String(ep + 1).padStart(3)}/60  loss: ${logs?.loss?.toFixed(4)}`);
     },
-  });
-}
+  },
+});
 ```
 
 ### Running the Example

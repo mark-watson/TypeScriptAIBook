@@ -38,37 +38,26 @@ We use a text summarization model for generating concise summaries. This model r
 
 import { pipeline } from "@huggingface/transformers";
 
-async function main() {
-  console.log("Loading summarization model...");
-  const summarizer = await pipeline(
-    "summarization",
-    "Xenova/distilbart-cnn-6-6"
-  );
+console.log("Loading summarization model...");
+const summarizer = await pipeline("summarization", "Xenova/distilbart-cnn-6-6");
 
-  const text =
-    "The President sent a request for changing the debt ceiling to " +
-    "Congress. The president might call a press conference. The Congress " +
-    "was not oblivious of what the Supreme Court's majority had ruled on " +
-    "budget matters. Even four Justices had found nothing to criticize in " +
-    "the President's requirement that the Federal Government's four-year " +
-    "spending plan. It is unclear whether or not the President and " +
-    "Congress can come to an agreement before Congress recesses for a " +
-    "holiday. There is major disagreement between the Democratic and " +
-    "Republican parties on spending.";
+const text =
+  "The President sent a request for changing the debt ceiling to " +
+  "Congress. The president might call a press conference. The Congress " +
+  "was not oblivious of what the Supreme Court's majority had ruled on " +
+  "budget matters. Even four Justices had found nothing to criticize in " +
+  "the President's requirement that the Federal Government's four-year " +
+  "spending plan. It is unclear whether or not the President and " +
+  "Congress can come to an agreement before Congress recesses for a " +
+  "holiday. There is major disagreement between the Democratic and " +
+  "Republican parties on spending.";
 
-  console.log(`\nOriginal text (${text.split(" ").length} words):`);
-  console.log(text.slice(0, 70) + "...\n");
+console.log(`\nOriginal text (${text.split(" ").length} words):`);
+console.log(text.slice(0, 70) + "...\n");
 
-  const result = await summarizer(text, {
-    max_length: 60,
-    num_beams: 4,
-  });
-
-  console.log("Summary:");
-  console.log((result as any)[0].summary_text);
-}
-
-main();
+const result = await summarizer(text, { max_length: 60, num_beams: 4 });
+console.log("Summary:");
+console.log((result as any)[0].summary_text);
 ```
 
 Here is the output from running **summarization.ts**:
@@ -95,32 +84,21 @@ Zero shot classification models work by specifying which classification labels y
 
 import { pipeline } from "@huggingface/transformers";
 
-async function main() {
-  console.log("Loading zero-shot classification model...");
-  const classifier = await pipeline(
-    "zero-shot-classification",
-    "Xenova/mobilebert-uncased-mnli"
-  );
+console.log("Loading zero-shot classification model...");
+const classifier = await pipeline("zero-shot-classification", "Xenova/mobilebert-uncased-mnli");
 
-  const text =
-    "Hi, I recently bought a device from your company but it is not " +
-    "working as advertised and I would like to get reimbursed!";
+const text = "Hi, I recently bought a device from your company but it is not " +
+  "working as advertised and I would like to get reimbursed!";
+const candidateLabels = ["refund", "faq", "legal"];
 
-  const candidateLabels = ["refund", "faq", "legal"];
+console.log(`\nInput text: ${text}`);
+console.log(`Candidate labels: ${JSON.stringify(candidateLabels)}\n`);
 
-  console.log(`\nInput text: ${text}`);
-  console.log(`Candidate labels: ${JSON.stringify(candidateLabels)}\n`);
-
-  const result = await classifier(text, candidateLabels);
-  console.log("Results:");
-  const labels = (result as any).labels as string[];
-  const scores = (result as any).scores as number[];
-  labels.forEach((label: string, i: number) => {
-    console.log(`  ${label}: ${scores[i].toFixed(4)}`);
-  });
-}
-
-main();
+const result = await classifier(text, candidateLabels) as any;
+console.log("Results:");
+result.labels.forEach((label: string, i: number) =>
+  console.log(`  ${label}: ${result.scores[i].toFixed(4)}`)
+);
 ```
 
 Here is the output:
@@ -151,62 +129,39 @@ The **@huggingface/transformers** library supports computing sentence embeddings
 import { pipeline } from "@huggingface/transformers";
 
 function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0, normA = 0, normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] ** 2;
-    normB += b[i] ** 2;
-  }
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  let dot = 0, nA = 0, nB = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; nA += a[i] ** 2; nB += b[i] ** 2; }
+  return dot / (Math.sqrt(nA) * Math.sqrt(nB));
 }
 
-async function main() {
-  console.log("Loading sentence-transformers model...");
-  const extractor = await pipeline(
-    "feature-extraction",
-    "Xenova/all-MiniLM-L6-v2"
-  );
+console.log("Loading sentence-transformers model...");
+const extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
 
-  const sentences = [
-    "The IRS has new tax laws.",
-    "Congress debating the economy.",
-    "The politician fled to South America.",
-    "Canada and the US will be in the playoffs.",
-    "The cat ran up the tree.",
-    "The meal tasted good but was expensive.",
-  ];
+const sentences = [
+  "The IRS has new tax laws.",
+  "Congress debating the economy.",
+  "The politician fled to South America.",
+  "Canada and the US will be in the playoffs.",
+  "The cat ran up the tree.",
+  "The meal tasted good but was expensive.",
+];
 
-  // Encode all sentences
-  const embeddings: number[][] = [];
-  for (const sentence of sentences) {
-    const output = await extractor(sentence, {
-      pooling: "mean",
-      normalize: true,
-    });
-    embeddings.push(Array.from(output.data as Float32Array));
-  }
+const embeddings = await Promise.all(
+  sentences.map(async s => Array.from((await extractor(s, { pooling: "mean", normalize: true })).data as Float32Array)),
+);
 
-  // Compute cosine similarities between all pairs
-  const pairs: { score: number; i: number; j: number }[] = [];
-  for (let i = 0; i < sentences.length - 1; i++) {
-    for (let j = i + 1; j < sentences.length; j++) {
-      pairs.push({
-        score: cosineSimilarity(embeddings[i], embeddings[j]),
-        i, j,
-      });
-    }
-  }
+const pairs = sentences.flatMap((_, i) =>
+  sentences.slice(i + 1).map((_, j) => ({
+    score: cosineSimilarity(embeddings[i], embeddings[i + j + 1]),
+    i, j: i + j + 1,
+  })),
+).sort((a, b) => b.score - a.score);
 
-  pairs.sort((a, b) => b.score - a.score);
-
-  console.log("\nTop-8 most similar pairs:");
-  for (const { score, i, j } of pairs.slice(0, 8)) {
-    console.log(`  ${score.toFixed(4)}  ${sentences[i]}`);
-    console.log(`          ${sentences[j]}\n`);
-  }
+console.log("\nTop-8 most similar pairs:");
+for (const { score, i, j } of pairs.slice(0, 8)) {
+  console.log(`  ${score.toFixed(4)}  ${sentences[i]}`);
+  console.log(`          ${sentences[j]}\n`);
 }
-
-main();
 ```
 
 The results make intuitive sense: sentences about government and economics cluster together, while unrelated sentences about cats and meals have very low similarity scores.

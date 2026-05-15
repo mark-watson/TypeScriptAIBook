@@ -47,36 +47,15 @@ Listing of **loadData.ts**:
 ```typescript
 import { readFileSync } from "node:fs";
 
-export interface DataSet {
-  xTrain: number[][];
-  yTrain: number[];
-  xTest: number[][];
-  yTest: number[];
-}
+export interface DataSet { xTrain: number[][]; yTrain: number[]; xTest: number[][]; yTest: number[] }
 
 export function loadData(): DataSet {
-  const parseCSV = (path: string): number[][] => {
-    const content = readFileSync(path, "utf-8");
-    return content
-      .trim()
-      .split("\n")
-      .slice(1) // skip header
-      .map(line => line.split(",").map(Number));
-  };
-
-  const train = parseCSV("labeled_cancer_data.csv");
-  const test = parseCSV("labeled_test_data.csv");
-
-  const xTrain = train.map(row => row.slice(0, 9));
-  const yTrain = train.map(row => row[row.length - 1]);
-
-  const xTest = test.map(row => row.slice(0, 9));
-  const yTest = test.map(row => row[row.length - 1]);
-
-  console.log("Number training examples:", xTrain.length);
-  console.log("Number testing examples:", xTest.length);
-
-  return { xTrain, yTrain, xTest, yTest };
+  const parse = (p: string) => readFileSync(p, "utf-8").trim().split("\n").slice(1).map(l => l.split(",").map(Number));
+  const [train, test] = ["labeled_cancer_data.csv", "labeled_test_data.csv"].map(parse);
+  const split = (d: number[][]) => ({ x: d.map(r => r.slice(0, 9)), y: d.map(r => r[r.length - 1]) });
+  const tr = split(train), te = split(test);
+  console.log(`Training: ${tr.x.length}  Test: ${te.x.length}`);
+  return { xTrain: tr.x, yTrain: tr.y, xTest: te.x, yTest: te.y };
 }
 ```
 
@@ -91,132 +70,54 @@ We implement the KNN algorithm from scratch. The key operations are: scale the f
 ```typescript
 import { loadData } from "./loadData.js";
 
-// ---- Feature scaling ----
-
-function fitScaler(data: number[][]): { means: number[]; stds: number[] } {
-  const n = data.length;
-  const d = data[0].length;
-  const means = new Array(d).fill(0);
-  const stds = new Array(d).fill(0);
-
-  for (const row of data) {
-    for (let j = 0; j < d; j++) means[j] += row[j];
-  }
+function fitScaler(data: number[][]) {
+  const n = data.length, d = data[0].length;
+  const means = new Array(d).fill(0), stds = new Array(d).fill(0);
+  for (const row of data) for (let j = 0; j < d; j++) means[j] += row[j];
   for (let j = 0; j < d; j++) means[j] /= n;
-
-  for (const row of data) {
-    for (let j = 0; j < d; j++) stds[j] += (row[j] - means[j]) ** 2;
-  }
+  for (const row of data) for (let j = 0; j < d; j++) stds[j] += (row[j] - means[j]) ** 2;
   for (let j = 0; j < d; j++) stds[j] = Math.sqrt(stds[j] / n);
-
   return { means, stds };
 }
 
-function applyScaler(
-  data: number[][],
-  scaler: { means: number[]; stds: number[] }
-): number[][] {
-  return data.map(row =>
-    row.map((val, j) =>
-      scaler.stds[j] > 0 ? (val - scaler.means[j]) / scaler.stds[j] : 0
-    )
-  );
-}
+const applyScaler = (data: number[][], s: { means: number[]; stds: number[] }) =>
+  data.map(r => r.map((v, j) => s.stds[j] > 0 ? (v - s.means[j]) / s.stds[j] : 0));
 
-// ---- KNN Classifier ----
+const eucDist = (a: number[], b: number[]) =>
+  Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));
 
-function euclideanDistance(a: number[], b: number[]): number {
-  let sum = 0;
-  for (let i = 0; i < a.length; i++) {
-    sum += (a[i] - b[i]) ** 2;
-  }
-  return Math.sqrt(sum);
-}
-
-function knnPredict(
-  trainX: number[][],
-  trainY: number[],
-  testSample: number[],
-  k: number
-): number {
-  const distances = trainX.map((point, i) => ({
-    distance: euclideanDistance(testSample, point),
-    label: trainY[i],
-  }));
-
-  distances.sort((a, b) => a.distance - b.distance);
-  const kNearest = distances.slice(0, k);
-
-  // Majority vote
+function knnPredict(trainX: number[][], trainY: number[], sample: number[], k: number): number {
+  const nearest = trainX.map((p, i) => ({ d: eucDist(sample, p), l: trainY[i] }))
+    .sort((a, b) => a.d - b.d).slice(0, k);
   const votes: Record<number, number> = {};
-  for (const { label } of kNearest) {
-    votes[label] = (votes[label] || 0) + 1;
-  }
-
-  return Number(
-    Object.entries(votes).sort(([, a], [, b]) => b - a)[0][0]
-  );
+  for (const { l } of nearest) votes[l] = (votes[l] || 0) + 1;
+  return Number(Object.entries(votes).sort(([, a], [, b]) => b - a)[0][0]);
 }
 
-// ---- Evaluation metrics ----
-
-function confusionMatrix(actual: number[], predicted: number[]): number[][] {
-  const matrix = [[0, 0], [0, 0]];
-  for (let i = 0; i < actual.length; i++) {
-    matrix[actual[i]][predicted[i]]++;
-  }
-  return matrix;
-}
-
-function classificationReport(
-  actual: number[],
-  predicted: number[]
-): void {
-  const classes = [0, 1];
-  console.log(
-    "              precision    recall  f1-score   support"
-  );
-  for (const cls of classes) {
+function classReport(actual: number[], predicted: number[]) {
+  console.log("              precision    recall  f1-score   support");
+  for (const cls of [0, 1]) {
     const tp = actual.filter((a, i) => a === cls && predicted[i] === cls).length;
     const fp = actual.filter((a, i) => a !== cls && predicted[i] === cls).length;
     const fn = actual.filter((a, i) => a === cls && predicted[i] !== cls).length;
-    const support = actual.filter(a => a === cls).length;
-    const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
-    const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
-    const f1 = precision + recall > 0
-      ? (2 * precision * recall) / (precision + recall) : 0;
-    console.log(
-      `         ${cls.toFixed(1)}       ${precision.toFixed(2)}` +
-      `      ${recall.toFixed(2)}      ${f1.toFixed(2)}` +
-      `         ${support}`
-    );
+    const sup = actual.filter(a => a === cls).length;
+    const pr = tp + fp > 0 ? tp / (tp + fp) : 0, re = tp + fn > 0 ? tp / (tp + fn) : 0;
+    const f1 = pr + re > 0 ? (2 * pr * re) / (pr + re) : 0;
+    console.log(`         ${cls.toFixed(1)}       ${pr.toFixed(2)}      ${re.toFixed(2)}      ${f1.toFixed(2)}         ${sup}`);
   }
-  const correct = actual.filter((a, i) => a === predicted[i]).length;
-  console.log(
-    `    accuracy                           ${(correct / actual.length).toFixed(2)}        ${actual.length}`
-  );
+  console.log(`    accuracy                           ${(actual.filter((a, i) => a === predicted[i]).length / actual.length).toFixed(2)}        ${actual.length}`);
 }
 
-// ---- Main ----
-
 const { xTrain, yTrain, xTest, yTest } = loadData();
-
-// Scale features
 const scaler = fitScaler(xTrain);
-const xTrainScaled = applyScaler(xTrain, scaler);
-const xTestScaled = applyScaler(xTest, scaler);
+const xTrainS = applyScaler(xTrain, scaler), xTestS = applyScaler(xTest, scaler);
+const yPred = xTestS.map(s => knnPredict(xTrainS, yTrain, s, 5));
 
-// Predict using KNN with k=5
-const yPredict = xTestScaled.map(sample =>
-  knnPredict(xTrainScaled, yTrain, sample, 5)
-);
-
-// Print results
-const cm = confusionMatrix(yTest, yPredict);
-console.log("\nConfusion Matrix:");
-console.log(cm.map(row => row.join("  ")).join("\n"));
+const cm = [[0, 0], [0, 0]];
+yTest.forEach((a, i) => cm[a][yPred[i]]++);
+console.log(`\nConfusion Matrix:\n${cm.map(r => r.join("  ")).join("\n")}`);
 console.log("\nClassification Report:");
-classificationReport(yTest, yPredict);
+classReport(yTest, yPred);
 ```
 
 Note that we fit the scaler on the training data and then use the same fitted scaler to transform the test data. This is important: scaling the test data with parameters learned from the training set prevents data leakage and ensures a fair evaluation.
@@ -233,8 +134,7 @@ These metrics provide an overall view of a model's performance in terms of both 
 
 ```bash
 $ tsx classification.ts
-Number training examples: 554
-Number testing examples: 15
+Training: 554  Test: 15
 
 Confusion Matrix:
 8  1
@@ -246,6 +146,7 @@ Classification Report:
          1.0       0.86      1.00      0.92         6
     accuracy                           0.93        15
 ```
+
 
 
 ## Classic Machine Learning Wrap-up

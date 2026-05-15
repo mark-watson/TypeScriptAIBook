@@ -126,45 +126,23 @@ Here is an example that extracts both the reasoning trace and the final answer:
 
 import ollama from "ollama";
 
-async function reasonAbout(
-  question: string,
-  model: string = "deepseek-r1:7b"
-): Promise<{ reasoning: string; answer: string }> {
-  const response = await ollama.chat({
-    model,
-    messages: [{ role: "user", content: question }],
-  });
-
-  const content = response.message.content;
-
-  // DeepSeek-R1 wraps reasoning in <think>...</think> tags
-  let reasoning = "";
-  let answer = content;
-
-  const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/);
-  if (thinkMatch) {
-    reasoning = thinkMatch[1].trim();
-    answer = content.replace(/<think>[\s\S]*?<\/think>/, "").trim();
-  }
-
-  return { reasoning, answer };
+async function reasonAbout(question: string, model = "deepseek-r1:7b") {
+  const content = (await ollama.chat({ model, messages: [{ role: "user", content: question }] })).message.content;
+  const m = content.match(/<think>([\s\S]*?)<\/think>/);
+  return {
+    reasoning: m?.[1].trim() ?? "",
+    answer: m ? content.replace(/<think>[\s\S]*?<\/think>/, "").trim() : content,
+  };
 }
 
-const question =
+const { reasoning, answer } = await reasonAbout(
   "A bakery sells 3 types of bread. Each type comes in 2 sizes. " +
   "How many different bread options are available? " +
-  "Respond with just the number and a brief explanation.";
+  "Respond with just the number and a brief explanation.",
+);
 
-const result = await reasonAbout(question);
-
-if (result.reasoning) {
-  console.log("=== Reasoning ===");
-  console.log(result.reasoning);
-  console.log();
-}
-
-console.log("=== Answer ===");
-console.log(result.answer);
+if (reasoning) console.log("=== Reasoning ===\n" + reasoning + "\n");
+console.log("=== Answer ===\n" + answer);
 ```
 
 The model's reasoning trace shows each step of its thinking, making the output more transparent and debuggable than a black-box answer.
@@ -179,59 +157,36 @@ Cloud APIs handle conversation history by passing the full message list with eac
 
 import ollama from "ollama";
 
-interface Message {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+type Msg = { role: "system" | "user" | "assistant"; content: string };
 
 class LocalAssistant {
-  private model: string;
-  private messages: Message[] = [];
-
-  constructor(model: string = "llama3.2:3b", systemPrompt: string = "") {
-    this.model = model;
-    if (systemPrompt) {
-      this.messages.push({ role: "system", content: systemPrompt });
-    }
+  private messages: Msg[] = [];
+  constructor(private model: string = "llama3.2:3b", systemPrompt = "") {
+    if (systemPrompt) this.messages.push({ role: "system", content: systemPrompt });
   }
-
   async chat(userMessage: string): Promise<string> {
     this.messages.push({ role: "user", content: userMessage });
-
-    const response = await ollama.chat({
-      model: this.model,
-      messages: this.messages,
-    });
-
-    const reply = response.message.content;
+    const reply = (await ollama.chat({ model: this.model, messages: this.messages })).message.content;
     this.messages.push({ role: "assistant", content: reply });
     return reply;
   }
-
-  get messageCount(): number {
-    return this.messages.length;
-  }
+  get messageCount() { return this.messages.length; }
 }
 
-// Create an assistant with a specific personality
 const assistant = new LocalAssistant(
   "llama3.2:3b",
-  "You are a concise technical writing assistant. Keep answers under 3 sentences."
+  "You are a concise technical writing assistant. Keep answers under 3 sentences.",
 );
 
-// Multi-turn conversation
-console.log("Q: What is gradient descent?");
-console.log("A:", await assistant.chat("What is gradient descent?"));
-console.log();
-
-console.log("Q: How does the learning rate affect it?");
-console.log("A:", await assistant.chat("How does the learning rate affect it?"));
-console.log();
-
-console.log("Q: What happens if I set it too high?");
-console.log("A:", await assistant.chat("What happens if I set it too high?"));
-console.log();
-
+for (const q of [
+  "What is gradient descent?",
+  "How does the learning rate affect it?",
+  "What happens if I set it too high?",
+]) {
+  console.log(`Q: ${q}`);
+  console.log("A:", await assistant.chat(q));
+  console.log();
+}
 console.log(`(Conversation has ${assistant.messageCount} messages)`);
 ```
 
@@ -246,13 +201,6 @@ Many Ollama models support vision — they can accept images alongside text and 
 
 ```typescript
 // ollama_describe-image.ts - Send images to Ollama vision models for description
-//
-// Usage:
-//   tsx ollama_describe-image.ts [image] [prompt...]
-//
-// Environment:
-//   OLLAMA_MODEL — optional model override (default: qwen3.5:0.8b)
-//   OLLAMA_HOST  — optional API host override (default: http://localhost:11434)
 
 import ollama from "ollama";
 import { readFileSync, existsSync } from "fs";
@@ -260,49 +208,26 @@ import { readFileSync, existsSync } from "fs";
 const MODEL = process.env.OLLAMA_MODEL ?? "qwen3.5:0.8b";
 const HOST = process.env.OLLAMA_HOST ?? "http://localhost:11434";
 
-function encodeImage(imagePath: string): string {
-  if (!existsSync(imagePath)) {
-    throw new Error(`Image file not found: ${imagePath}`);
-  }
-  return readFileSync(imagePath).toString("base64");
-}
-
 async function imageToText(
-  imagePaths: string | string[],
-  prompt: string,
-  model: string = MODEL,
-  host: string = HOST
+  imagePaths: string | string[], prompt: string,
+  model = MODEL, host = HOST,
 ): Promise<string> {
   const paths = Array.isArray(imagePaths) ? imagePaths : [imagePaths];
-  for (const p of paths) {
-    if (!existsSync(p)) {
-      throw new Error(`Image file not found: ${p}`);
-    }
-  }
-  const images = paths.map(encodeImage);
-  const response = await ollama.chat({
-    model,
-    messages: [{ role: "user", content: prompt, images }],
-    host,
-  });
+  for (const p of paths) if (!existsSync(p)) throw new Error(`Image file not found: ${p}`);
+  const images = paths.map(p => readFileSync(p).toString("base64"));
+  const response = await ollama.chat({ model, messages: [{ role: "user", content: prompt, images }], host });
   return response.message.content;
 }
 
-async function describeImageSimple(imagePath: string): Promise<string> {
-  return imageToText(imagePath, "What is in this image?");
-}
-
 const [,, imageArg, ...promptArgs] = process.argv;
-const imagePath = imageArg ?? "ticket.png";
-const promptText = promptArgs.length > 0
-  ? promptArgs.join(" ")
-  : "Print out the plain text in this image";
-
-const result = await imageToText(imagePath, promptText);
+const result = await imageToText(
+  imageArg ?? "ticket.png",
+  promptArgs.length > 0 ? promptArgs.join(" ") : "Print out the plain text in this image",
+);
 console.log(result);
 ```
 
-The key difference from a text-only request is the `images` field on the message, which holds an array of base64-encoded image strings. The `encodeImage` function reads a file and converts it to base64 — no external dependencies needed.
+The key difference from a text-only request is the `images` field on the message, which holds an array of base64-encoded image strings. The `readFileSync(...).toString("base64")` call converts a file to base64 inline — no external dependencies needed.
 
 You can pass a single image or multiple images. The `imageToText` function accepts either a string path or an array of paths, making it easy to compare images side by side, for example:
 
@@ -327,179 +252,104 @@ The Ollama Cloud API provides access to larger models like `gpt-oss:120b-cloud` 
 The example `ollama-cloud-search.ts` defines two tools — `web_search` and `web_fetch` — and runs an agent loop that calls the Ollama Cloud API, executes any requested tool calls, and continues until the model produces a final answer.
 
 ```typescript
-// ollama-cloud-search.ts - Agent loop using Ollama Cloud API with web_search and web_fetch tool calling
+// ollama-cloud-search.ts - Agent loop using Ollama Cloud API
 //
 // Usage: OLLAMA_API_KEY="your-key" tsx ollama-cloud-search.ts
-//         or set OLLAMA_API_KEY in your environment
 
 const CLOUD_MODEL = "gpt-oss:120b-cloud";
 const CLOUD_HOST = "https://ollama.com/api/chat";
+const API_KEY = process.env.OLLAMA_API_KEY;
+if (!API_KEY) throw new Error("OLLAMA_API_KEY environment variable is not set");
 
-function getApiKey(): string {
-  const key = process.env.OLLAMA_API_KEY;
-  if (!key) throw new Error("OLLAMA_API_KEY environment variable is not set");
-  return key;
-}
-
-const webSearchSchema = {
+const mkTool = (name: string, desc: string, param: string, pdesc: string) => ({
   type: "function",
   function: {
-    name: "web_search",
-    description: "Search the web for current information",
-    parameters: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "The search query string",
-        },
-      },
-      required: ["query"],
-    },
+    name, description: desc,
+    parameters: { type: "object", properties: { [param]: { type: "string", description: pdesc } }, required: [param] },
   },
-};
+});
 
-const webFetchSchema = {
-  type: "function",
-  function: {
-    name: "web_fetch",
-    description: "Fetch the content of a web page by URL",
-    parameters: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "The URL to fetch",
-        },
-      },
-      required: ["url"],
-    },
-  },
-};
-
-const TOOLS = [webSearchSchema, webFetchSchema];
+const TOOLS = [
+  mkTool("web_search", "Search the web for current information", "query", "The search query string"),
+  mkTool("web_fetch", "Fetch the content of a web page by URL", "url", "The URL to fetch"),
+];
 
 async function executeWebSearch(args: { query: string }): Promise<string> {
-  const query = args.query ?? "";
-  const encoded = encodeURIComponent(query);
-  const url = `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&skip_disambig=1`;
-
-  console.log(`  [web_search] query: ${query}`);
+  const q = args.query ?? "";
+  console.log(`  [web_search] query: ${q}`);
   try {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const resp = await fetch(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`,
+      { signal: AbortSignal.timeout(10_000) },
+    );
     const text = await resp.text();
     console.log(`  [web_search] got ${text.length} chars`);
     return text;
-  } catch (e: any) {
-    return `web_search error: ${e.message}`;
-  }
+  } catch (e: any) { return `web_search error: ${e.message}`; }
 }
 
 async function executeWebFetch(args: { url: string }): Promise<string> {
-  const url = args.url ?? "";
-
-  console.log(`  [web_fetch] url: ${url}`);
+  console.log(`  [web_fetch] url: ${args.url}`);
   try {
-    const resp = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    const resp = await fetch(args.url ?? "", { signal: AbortSignal.timeout(15_000) });
     let text = await resp.text();
     if (text.length > 4000) text = text.slice(0, 4000);
     console.log(`  [web_fetch] got ${text.length} chars`);
     return text;
-  } catch (e: any) {
-    return `web_fetch error: ${e.message}`;
-  }
+  } catch (e: any) { return `web_fetch error: ${e.message}`; }
 }
 
-interface Message {
-  role: string;
-  content: string;
-  tool_calls?: ToolCall[];
-  tool_name?: string;
-}
+const TOOL_FNS: Record<string, (args: any) => Promise<string>> = {
+  web_search: executeWebSearch,
+  web_fetch: executeWebFetch,
+};
 
-interface ToolCall {
-  function: { name: string; arguments: any };
-}
+interface Message { role: string; content: string; tool_calls?: { function: { name: string; arguments: any } }[]; tool_name?: string }
 
-interface CloudResponse {
-  message: Message;
-}
-
-async function cloudOllamaCall(messages: Message[]): Promise<CloudResponse> {
-  const apiKey = getApiKey();
-
+async function cloudOllamaCall(messages: Message[]) {
   console.log(`\nCalling Ollama Cloud (${CLOUD_MODEL})...`);
-
   const resp = await fetch(CLOUD_HOST, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: CLOUD_MODEL,
-      stream: false,
-      messages,
-      tools: TOOLS,
-    }),
+    headers: { Authorization: `Bearer ${API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: CLOUD_MODEL, stream: false, messages, tools: TOOLS }),
   });
-
-  const data = await resp.json();
-  return data as CloudResponse;
+  return (await resp.json()) as { message: Message };
 }
 
 async function cloudSearchAgent(prompt: string): Promise<string> {
   const messages: Message[] = [{ role: "user", content: prompt }];
 
   while (true) {
-    const data = await cloudOllamaCall(messages);
-    const msg = data.message;
+    const { message: msg } = await cloudOllamaCall(messages);
     messages.push(msg);
 
-    if (msg.tool_calls?.length) {
-      console.log(`\nModel requested ${msg.tool_calls.length} tool call(s).`);
-
-      for (const tc of msg.tool_calls) {
-        const { name, arguments: args } = tc.function;
-        let result: string;
-
-        if (name === "web_search") {
-          result = await executeWebSearch(args);
-        } else if (name === "web_fetch") {
-          result = await executeWebFetch(args);
-        } else {
-          result = `Unknown tool: ${name}`;
-        }
-
-        console.log(`  Tool ${name} completed.`);
-
-        messages.push({
-          role: "tool",
-          content: result,
-          tool_name: name,
-        });
-      }
-    } else {
+    if (!msg.tool_calls?.length) {
       console.log(`\nFinal Answer: ${msg.content}`);
       return msg.content ?? "No response";
+    }
+
+    console.log(`\nModel requested ${msg.tool_calls.length} tool call(s).`);
+    for (const tc of msg.tool_calls) {
+      const { name, arguments: args } = tc.function;
+      const fn = TOOL_FNS[name];
+      const result = fn ? await fn(args) : `Unknown tool: ${name}`;
+      console.log(`  Tool ${name} completed.`);
+      messages.push({ role: "tool", content: result, tool_name: name });
     }
   }
 }
 
-const query =
-  process.argv.length > 2
-    ? process.argv.slice(2).join(" ")
-    : "What is the current price of Bitcoin and who is the CEO of Nvidia?";
+const query = process.argv.length > 2
+  ? process.argv.slice(2).join(" ")
+  : "What is the current price of Bitcoin and who is the CEO of Nvidia?";
 
-const answer = await cloudSearchAgent(query);
-console.log(answer);
-
+console.log(await cloudSearchAgent(query));
 export {};
 ```
 
 ### How Tool Calling Works
 
-The **tool schemas** (`webSearchSchema` and `webFetchSchema`) define what each tool does and the parameters it accepts. These schemas follow the OpenAI function-calling format, which the Ollama Cloud API uses. When you include the `tools` array in the request body, the model can decide to call one or more tools instead of (or in addition to) returning text.
+The **tool schemas** (built by the `mkTool` helper) define what each tool does and the parameters it accepts. These schemas follow the OpenAI function-calling format, which the Ollama Cloud API uses. When you include the `tools` array in the request body, the model can decide to call one or more tools instead of (or in addition to) returning text.
 
 The tool call response from the model includes a `tool_calls` array with the function name and arguments. Your code executes the tool — for `web_search`, that means hitting the DuckDuckGo API; for `web_fetch`, fetching the URL with a 15-second timeout and truncating the result to 4000 characters to stay within model context limits.
 
@@ -535,20 +385,13 @@ Ollama exposes an OpenAI-compatible API endpoint, which means you can use the st
 
 import OpenAI from "openai";
 
-// Point the OpenAI client at the local Ollama server
-const client = new OpenAI({
-  baseURL: "http://localhost:11434/v1",
-  apiKey: "not-needed", // Ollama doesn't require auth locally
-});
+const client = new OpenAI({ baseURL: "http://localhost:11434/v1", apiKey: "not-needed" });
 
 const response = await client.chat.completions.create({
   model: "llama3.2:3b",
   messages: [
     { role: "system", content: "You are a helpful assistant." },
-    {
-      role: "user",
-      content: "What is the difference between a list and a tuple in Python?",
-    },
+    { role: "user", content: "What is the difference between a list and a tuple in Python?" },
   ],
   temperature: 0.7,
 });

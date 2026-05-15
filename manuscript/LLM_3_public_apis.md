@@ -97,25 +97,18 @@ The **temperature** parameter controls how creative or deterministic the output 
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! });
+const apiKey = process.env.GOOGLE_API_KEY;
+if (!apiKey) { console.error("Set GOOGLE_API_KEY"); process.exit(1); }
 
+const ai = new GoogleGenAI({ apiKey });
 const prompt = "Write a one-sentence tagline for a coffee shop.";
 
-// Low temperature: deterministic, predictable
-const responseLow = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: prompt,
-  config: { temperature: 0.0 },
-});
-console.log(`Temperature 0.0: ${responseLow.text}`);
-
-// High temperature: creative, varied
-const responseHigh = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: prompt,
-  config: { temperature: 1.5 },
-});
-console.log(`Temperature 1.5: ${responseHigh.text}`);
+for (const temp of [0.0, 1.5]) {
+  const r = await ai.models.generateContent({
+    model: "gemini-2.5-flash", contents: prompt, config: { temperature: temp },
+  });
+  console.log(`Temperature ${temp}: ${r.text}`);
+}
 ```
 
 For most practical applications — code generation, data extraction, question answering — use a low temperature (0.0 to 0.3). For creative writing and brainstorming, higher temperatures (0.7 to 1.5) produce more interesting results.
@@ -164,39 +157,30 @@ Real applications often involve multi-turn conversations where the model needs t
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! });
+const apiKey = process.env.GOOGLE_API_KEY;
+if (!apiKey) { console.error("Set GOOGLE_API_KEY"); process.exit(1); }
 
-interface Message {
-  role: "user" | "model";
-  parts: { text: string }[];
-}
-
-const conversation: Message[] = [];
+const ai = new GoogleGenAI({ apiKey });
+const conversation: { role: "user" | "model"; parts: { text: string }[] }[] = [];
 
 async function chat(userMessage: string): Promise<string> {
-  conversation.push({
-    role: "user",
-    parts: [{ text: userMessage }],
-  });
-
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: conversation,
-  });
-
-  const reply = response.text ?? "";
-  conversation.push({
-    role: "model",
-    parts: [{ text: reply }],
-  });
-
+  conversation.push({ role: "user", parts: [{ text: userMessage }] });
+  const reply = (await ai.models.generateContent({
+    model: "gemini-2.5-flash", contents: conversation,
+  })).text ?? "";
+  conversation.push({ role: "model", parts: [{ text: reply }] });
   return reply;
 }
 
-// A multi-turn conversation
-console.log(await chat("What is the capital of France?"));
-console.log(await chat("What is its population?"));  // "its" refers to Paris
-console.log(await chat("What are the top 3 tourist attractions there?"));
+for (const q of [
+  "What is the capital of France?",
+  "What is its population?",
+  "What are the top 3 tourist attractions there?",
+]) {
+  console.log(`Q: ${q}`);
+  console.log("A:", await chat(q));
+  console.log();
+}
 ```
 
 Notice that the second and third messages use pronouns ("its", "there") that only make sense given the conversation history. The model resolves these references correctly because it sees the full conversation with each request.

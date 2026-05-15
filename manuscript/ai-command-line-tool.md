@@ -39,24 +39,21 @@ Before we can do relevance-based cache lookups, we need a way to extract meaning
 ```typescript
 // keywords.ts — Keyword extraction with stop-word filtering
 
-const STOP_WORDS = new Set([
-  "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
-  "have", "has", "had", "do", "does", "did", "will", "would", "shall", "should",
-  "may", "might", "must", "can", "could", "am", "it", "its",
-  "in", "on", "at", "to", "for", "of", "with", "by", "from", "as",
-  "and", "or", "but", "not", "no", "nor", "so", "yet",
-  "this", "that", "these", "those", "what", "which", "who", "whom",
-  "i", "me", "my", "we", "our", "you", "your", "he", "she", "they", "them",
-  "how", "when", "where", "why", "if", "then", "than", "about",
+const STOP = new Set([
+  "a","an","the","is","are","was","were","be","been","being",
+  "have","has","had","do","does","did","will","would","shall","should",
+  "may","might","must","can","could","am","it","its",
+  "in","on","at","to","for","of","with","by","from","as",
+  "and","or","but","not","no","nor","so","yet",
+  "this","that","these","those","what","which","who","whom",
+  "i","me","my","we","our","you","your","he","she","they","them",
+  "how","when","where","why","if","then","than","about",
 ]);
 
-export function extractKeywords(text: string): string[] {
-  return text
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w) => w.replace(/^[?!.,;:'"()]+|[?!.,;:'"()]+$/g, ""))
-    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
-}
+export const extractKeywords = (text: string): string[] =>
+  text.toLowerCase().split(/\s+/)
+    .map(w => w.replace(/^[?!.,;:'"()]+|[?!.,;:'"()]+$/g, ""))
+    .filter(w => w.length > 2 && !STOP.has(w));
 ```
 
 For example, the query `"What sci-fi movies are playing today in Flagstaff AZ?"` produces the keyword array `["sci-fi", "movies", "playing", "today", "flagstaff"]`. Words shorter than three characters, punctuation, and common stop words are all filtered out.
@@ -74,63 +71,35 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-interface CacheEntry {
-  content: string;
-  createdAt: number;
-}
+interface CacheEntry { content: string; createdAt: number }
 
 export class CacheEngine {
   private entries: CacheEntry[];
-  private filePath: string;
-
-  constructor(filePath: string) {
-    this.filePath = filePath;
-    if (existsSync(filePath)) {
-      const raw = readFileSync(filePath, "utf-8");
-      this.entries = JSON.parse(raw) as CacheEntry[];
-    } else {
-      this.entries = [];
-    }
+  constructor(private filePath: string) {
+    this.entries = existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : [];
   }
+  private save() { writeFileSync(this.filePath, JSON.stringify(this.entries, null, 2)); }
 
-  private save(): void {
-    writeFileSync(this.filePath, JSON.stringify(this.entries, null, 2));
-  }
+  add(content: string) { this.entries.push({ content, createdAt: Date.now() }); this.save(); }
 
-  add(content: string): void {
-    this.entries.push({ content, createdAt: Date.now() });
-    this.save();
-  }
-
-  lookup(keywords: string[], limit: number = 10): string[] {
-    if (keywords.length === 0) return [];
-    const lowerKeywords = keywords.map((kw) => kw.toLowerCase());
-
+  lookup(keywords: string[], limit = 10): string[] {
+    const lk = keywords.map(k => k.toLowerCase());
     return this.entries
-      .filter((entry) => {
-        const lowerContent = entry.content.toLowerCase();
-        return lowerKeywords.some((kw) => lowerContent.includes(kw));
-      })
+      .filter(e => lk.some(k => e.content.toLowerCase().includes(k)))
       .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit)
-      .map((entry) => entry.content);
+      .slice(0, limit).map(e => e.content);
   }
 
-  count(): number {
-    return this.entries.length;
-  }
+  count() { return this.entries.length; }
 
   clearOlderThanOneWeek(): number {
-    const cutoff = Date.now() - ONE_WEEK_MS;
     const before = this.entries.length;
-    this.entries = this.entries.filter((e) => e.createdAt >= cutoff);
+    this.entries = this.entries.filter(e => e.createdAt >= Date.now() - ONE_WEEK_MS);
     this.save();
     return before - this.entries.length;
   }
 
-  close(): void {
-    this.save();
-  }
+  close() { this.save(); }
 }
 ```
 
@@ -145,8 +114,6 @@ Using a JSON file rather than SQLite keeps the project dependency-free and makes
 The application imports from Node.js standard library modules and the two local modules:
 
 ```typescript
-// ai_repl.ts — Interactive Gemini REPL with search grounding and cache
-
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { join } from "node:path";
@@ -156,7 +123,7 @@ import { CacheEngine } from "./cache_engine.js";
 import { extractKeywords } from "./keywords.js";
 
 const MODEL = "gemini-2.5-flash";
-const CACHE_DB_PATH = join(homedir(), ".ai-repl-cache.json");
+const CACHE_DB_PATH = join(homedir(), ".ai-repl-cache.db");
 ```
 
 The model is set to `gemini-2.5-flash` for fast, capable responses suitable for interactive use. The cache file lives in the user's home directory so it persists across sessions and working directories.
@@ -169,11 +136,7 @@ Before doing anything else, we verify the API key is present:
 
 ```typescript
 const apiKey = process.env.GOOGLE_API_KEY;
-if (!apiKey) {
-  console.error("Error: GOOGLE_API_KEY environment variable is not set.");
-  console.error("Export it before running:  export GOOGLE_API_KEY=your-key");
-  process.exit(1);
-}
+if (!apiKey) { console.error("Error: Set GOOGLE_API_KEY"); process.exit(1); }
 
 const ai = new GoogleGenAI({ apiKey });
 ```
@@ -188,20 +151,13 @@ The `buildContextFromCache` function uses keyword extraction to retrieve only re
 const cache = new CacheEngine(CACHE_DB_PATH);
 let lastAnswer: string | null = null;
 
-function buildContextFromCache(query: string): string {
-  const keywords = extractKeywords(query);
-  if (keywords.length === 0) return "";
-
-  const items = cache.lookup(keywords, 10);
-  if (items.length === 0) return "";
-
-  const bullets = items.map((item) => `- ${item}`).join("\n");
-  return (
-    "Use the following context from previous conversations " +
-    "when answering:\n\n" +
-    bullets +
-    "\n\n---\n\n"
-  );
+function buildContext(query: string): string {
+  const kw = extractKeywords(query);
+  if (!kw.length) return "";
+  const items = cache.lookup(kw, 10);
+  if (!items.length) return "";
+  return "Use the following context from previous conversations when answering:\n\n" +
+    items.map(i => `- ${i}`).join("\n") + "\n\n---\n\n";
 }
 ```
 
@@ -223,31 +179,13 @@ This preamble is prepended to the prompt so Gemini can reference previously cach
 The `askGemini` function handles both plain and search-grounded queries:
 
 ```typescript
-async function askGemini(
-  prompt: string,
-  searchGrounding: boolean,
-): Promise<string> {
-  const context = buildContextFromCache(prompt);
-  const fullPrompt = context + prompt;
-
+async function askGemini(prompt: string, search: boolean): Promise<string> {
   try {
     const config: Record<string, unknown> = {};
-    if (searchGrounding) {
-      config.tools = [{ googleSearch: {} }];
-    }
-
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: fullPrompt,
-      config,
-    });
-
-    return response.text ?? "[No response from Gemini]";
-  } catch (error) {
-    return `[Error calling Gemini API: ${
-      error instanceof Error ? error.message : error
-    }]`;
-  }
+    if (search) config.tools = [{ googleSearch: {} }];
+    const r = await ai.models.generateContent({ model: MODEL, contents: buildContext(prompt) + prompt, config });
+    return r.text ?? "[No response from Gemini]";
+  } catch (e) { return `[Error: ${e instanceof Error ? e.message : e}]`; }
 }
 ```
 
@@ -260,80 +198,48 @@ The `tools: [{ googleSearch: {} }]` config enables Google Search grounding throu
 The heart of the application is `replLoop`, which uses Node.js `readline/promises` for interactive input:
 
 ```typescript
-async function replLoop(): Promise<void> {
-  const rl = readline.createInterface({ input, output });
+function showAnswer(text: string) { console.log("\n" + text + "\n"); lastAnswer = text; }
 
+async function replLoop() {
+  const rl = readline.createInterface({ input, output });
   console.log("\n  Gemini AI REPL  (type 'h' for help)\n");
 
   try {
     while (true) {
       let line: string;
-      try {
-        line = await rl.question("gemini> ");
-      } catch {
-        // EOF (Ctrl-D)
-        console.log("\nGoodbye.");
-        break;
-      }
+      try { line = await rl.question("gemini> "); } catch { console.log("\nGoodbye."); break; }
+      const t = line.trim();
+      if (!t) continue;
+      if (["q", "quit", "exit"].includes(t.toLowerCase())) { console.log("Goodbye."); break; }
 
-      const trimmed = line.trim();
-
-      if (trimmed === "") continue;
-
-      if (["q", "quit", "exit"].includes(trimmed.toLowerCase())) {
-        console.log("Goodbye.");
-        break;
-      }
-
-      if (["h", "help"].includes(trimmed.toLowerCase())) {
-        printHelp();
+      if (["h", "help"].includes(t.toLowerCase())) {
+        console.log(`\n  <text>  Ask Gemini    !<text> Ask + Search\n  >      Cache answer  !      Clear old cache\n  h      Help          q      Quit\n  Model: ${MODEL}  Cache: ${CACHE_DB_PATH} (${cache.count()} items)\n`);
         continue;
       }
 
-      // ">" — cache last answer
-      if (trimmed === ">") {
-        if (lastAnswer) {
-          cache.add(lastAnswer);
-          console.log(`  [Cached. ${cache.count()} items total]`);
-        } else {
-          console.log("  [No answer to cache yet]");
-        }
+      if (t === ">") {
+        lastAnswer ? (cache.add(lastAnswer), console.log(`  [Cached. ${cache.count()} items]`)) : console.log("  [No answer yet]");
         continue;
       }
 
-      // "!" alone — clear old cache
-      if (trimmed === "!") {
-        const before = cache.count();
-        cache.clearOlderThanOneWeek();
-        const after = cache.count();
-        console.log(
-          `  [Cleared ${before - after} old entries. ${after} items remain]`,
-        );
+      if (t === "!" || (t.startsWith("!") && !t.slice(1).trim())) {
+        const b = cache.count(); cache.clearOlderThanOneWeek();
+        console.log(`  [Cleared ${b - cache.count()} old entries. ${cache.count()} remain]`);
         continue;
       }
 
-      // "!<query>" — search-grounded question
-      if (trimmed.startsWith("!")) {
-        const query = trimmed.slice(1).trim();
-        if (query !== "") {
-          console.log("  [Searching...]");
-          const answer = await askGemini(query, true);
-          displayAnswer(answer);
-        }
-        continue;
+      if (t.startsWith("!")) {
+        console.log("  [Searching...]");
+        showAnswer(await askGemini(t.slice(1).trim(), true));
+      } else {
+        console.log("  [Thinking...]");
+        showAnswer(await askGemini(t, false));
       }
-
-      // Plain question
-      console.log("  [Thinking...]");
-      const answer = await askGemini(trimmed, false);
-      displayAnswer(answer);
     }
-  } finally {
-    rl.close();
-    cache.close();
-    console.log("  [Cache closed]");
-  }
+  } finally { rl.close(); cache.close(); console.log("  [Cache closed]"); }
 }
+
+replLoop();
 ```
 
 The command dispatch is worth studying. The `!` character serves double duty: alone it clears old cache entries, but followed by text it triggers a search-grounded query. The `if (trimmed === "!")` check before `if (trimmed.startsWith("!"))` ensures the two cases are handled separately.

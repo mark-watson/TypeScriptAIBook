@@ -318,6 +318,213 @@ Vision models like **qwen3.5:0.8b** and **llava:7b** handle these requests local
 
 The `ollama describe` npm script in `package.json` runs this file with defaults — useful for a quick test with the included `ticket.png` sample image.
 
+{pagebreak}
+
+## Adding Web Search Tools
+
+The Ollama Cloud API provides access to larger models like `gpt-oss:120b-cloud` that support function calling — the model can request external tools during a conversation. This enables an agent loop pattern where the model decides when to search the web or fetch a URL, your code executes those actions, and the results feed back into the model's context.
+
+The example `ollama-cloud-search.ts` defines two tools — `web_search` and `web_fetch` — and runs an agent loop that calls the Ollama Cloud API, executes any requested tool calls, and continues until the model produces a final answer.
+
+```typescript
+// ollama-cloud-search.ts - Agent loop using Ollama Cloud API with web_search and web_fetch tool calling
+//
+// Usage: OLLAMA_API_KEY="your-key" tsx ollama-cloud-search.ts
+//         or set OLLAMA_API_KEY in your environment
+
+const CLOUD_MODEL = "gpt-oss:120b-cloud";
+const CLOUD_HOST = "https://ollama.com/api/chat";
+
+function getApiKey(): string {
+  const key = process.env.OLLAMA_API_KEY;
+  if (!key) throw new Error("OLLAMA_API_KEY environment variable is not set");
+  return key;
+}
+
+const webSearchSchema = {
+  type: "function",
+  function: {
+    name: "web_search",
+    description: "Search the web for current information",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "The search query string",
+        },
+      },
+      required: ["query"],
+    },
+  },
+};
+
+const webFetchSchema = {
+  type: "function",
+  function: {
+    name: "web_fetch",
+    description: "Fetch the content of a web page by URL",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "The URL to fetch",
+        },
+      },
+      required: ["url"],
+    },
+  },
+};
+
+const TOOLS = [webSearchSchema, webFetchSchema];
+
+async function executeWebSearch(args: { query: string }): Promise<string> {
+  const query = args.query ?? "";
+  const encoded = encodeURIComponent(query);
+  const url = `https://api.duckduckgo.com/?q=${encoded}&format=json&no_html=1&skip_disambig=1`;
+
+  console.log(`  [web_search] query: ${query}`);
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+    const text = await resp.text();
+    console.log(`  [web_search] got ${text.length} chars`);
+    return text;
+  } catch (e: any) {
+    return `web_search error: ${e.message}`;
+  }
+}
+
+async function executeWebFetch(args: { url: string }): Promise<string> {
+  const url = args.url ?? "";
+
+  console.log(`  [web_fetch] url: ${url}`);
+  try {
+    const resp = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+    let text = await resp.text();
+    if (text.length > 4000) text = text.slice(0, 4000);
+    console.log(`  [web_fetch] got ${text.length} chars`);
+    return text;
+  } catch (e: any) {
+    return `web_fetch error: ${e.message}`;
+  }
+}
+
+interface Message {
+  role: string;
+  content: string;
+  tool_calls?: ToolCall[];
+  tool_name?: string;
+}
+
+interface ToolCall {
+  function: { name: string; arguments: any };
+}
+
+interface CloudResponse {
+  message: Message;
+}
+
+async function cloudOllamaCall(messages: Message[]): Promise<CloudResponse> {
+  const apiKey = getApiKey();
+
+  console.log(`\nCalling Ollama Cloud (${CLOUD_MODEL})...`);
+
+  const resp = await fetch(CLOUD_HOST, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: CLOUD_MODEL,
+      stream: false,
+      messages,
+      tools: TOOLS,
+    }),
+  });
+
+  const data = await resp.json();
+  return data as CloudResponse;
+}
+
+async function cloudSearchAgent(prompt: string): Promise<string> {
+  const messages: Message[] = [{ role: "user", content: prompt }];
+
+  while (true) {
+    const data = await cloudOllamaCall(messages);
+    const msg = data.message;
+    messages.push(msg);
+
+    if (msg.tool_calls?.length) {
+      console.log(`\nModel requested ${msg.tool_calls.length} tool call(s).`);
+
+      for (const tc of msg.tool_calls) {
+        const { name, arguments: args } = tc.function;
+        let result: string;
+
+        if (name === "web_search") {
+          result = await executeWebSearch(args);
+        } else if (name === "web_fetch") {
+          result = await executeWebFetch(args);
+        } else {
+          result = `Unknown tool: ${name}`;
+        }
+
+        console.log(`  Tool ${name} completed.`);
+
+        messages.push({
+          role: "tool",
+          content: result,
+          tool_name: name,
+        });
+      }
+    } else {
+      console.log(`\nFinal Answer: ${msg.content}`);
+      return msg.content ?? "No response";
+    }
+  }
+}
+
+const query =
+  process.argv.length > 2
+    ? process.argv.slice(2).join(" ")
+    : "What is the current price of Bitcoin and who is the CEO of Nvidia?";
+
+const answer = await cloudSearchAgent(query);
+console.log(answer);
+
+export {};
+```
+
+### How Tool Calling Works
+
+The **tool schemas** (`webSearchSchema` and `webFetchSchema`) define what each tool does and the parameters it accepts. These schemas follow the OpenAI function-calling format, which the Ollama Cloud API uses. When you include the `tools` array in the request body, the model can decide to call one or more tools instead of (or in addition to) returning text.
+
+The tool call response from the model includes a `tool_calls` array with the function name and arguments. Your code executes the tool — for `web_search`, that means hitting the DuckDuckGo API; for `web_fetch`, fetching the URL with a 15-second timeout and truncating the result to 4000 characters to stay within model context limits.
+
+Each tool result is appended to the conversation as a message with `role: "tool"` and `tool_name` set to the function name. The loop then calls the API again so the model can process the results and either request more tools or produce a final answer.
+
+### Running the Agent
+
+You need an Ollama Cloud API key (set as `OLLAMA_API_KEY` in your environment) and a cloud model available in your account:
+
+```bash
+$ OLLAMA_API_KEY="ollama-ck-..." tsx ollama-cloud-search.ts "What is the price of Gold and who is the CEO of Toyota?"
+  [web_search] query: Toyota CEO 2025
+  [web_search] got 1204 chars
+  Tool web_search completed.
+  [web_search] query: Gold price today
+  [web_search] got 1142 chars
+  Tool web_search completed.
+
+Final Answer: The current price of gold is $2,034.50 per ounce. As of 2025, Koji Sato is the CEO of Toyota Motor Corporation, having taken over from Akio Toyoda.
+```
+
+The agent made two parallel web search calls, received the results, and synthesized them into a final answer. The `cloud-search` npm script in `package.json` runs this file with defaults, or you can pass a custom query as command-line arguments.
+
+Unlike local models, the Ollama Cloud API routes your request to larger hosted models, which have stronger reasoning and more up-to-date knowledge. The tradeoff is that requests leave your machine and you pay for API usage — but with the benefit of tool-calling capabilities that enable this agent pattern.
+
 
 ## OpenAI-Compatible API
 

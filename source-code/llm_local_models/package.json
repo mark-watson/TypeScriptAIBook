@@ -8,7 +8,8 @@
     "reason": "tsx ollama_reasoning.ts",
     "memory": "tsx ollama_memory.ts",
     "compat": "tsx ollama_openai_compat.ts",
-    "describe": "tsx ollama_describe-image.ts"
+    "describe": "tsx ollama_describe-image.ts",
+    "cloud-search": "tsx ollama-cloud-search.ts"
   },
   "dependencies": { "ollama": "^0.5.0", "openai": "^4.77.0" },
   "devDependencies": { "typescript": "^5.7.0", "@types/node": "^22.0.0", "tsx": "^4.19.0" }

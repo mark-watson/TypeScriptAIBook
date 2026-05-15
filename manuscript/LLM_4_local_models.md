@@ -238,6 +238,87 @@ console.log(`(Conversation has ${assistant.messageCount} messages)`);
 Note that unlike cloud APIs, keeping long conversation histories in local models is free — there are no per-token costs. The main constraint is the model's context window size.
 
 
+## Describe Content of Images
+
+Here we look at the example `ollama_describe-image.ts` that can read images and describe what is on the image. Here I use an image of a symphony ticket.
+
+Many Ollama models support vision — they can accept images alongside text and describe their contents. To use this, pass base64-encoded images as an `images` array on the user message.
+
+```typescript
+// ollama_describe-image.ts - Send images to Ollama vision models for description
+//
+// Usage:
+//   tsx ollama_describe-image.ts [image] [prompt...]
+//
+// Environment:
+//   OLLAMA_MODEL — optional model override (default: qwen3.5:0.8b)
+//   OLLAMA_HOST  — optional API host override (default: http://localhost:11434)
+
+import ollama from "ollama";
+import { readFileSync, existsSync } from "fs";
+
+const MODEL = process.env.OLLAMA_MODEL ?? "qwen3.5:0.8b";
+const HOST = process.env.OLLAMA_HOST ?? "http://localhost:11434";
+
+function encodeImage(imagePath: string): string {
+  if (!existsSync(imagePath)) {
+    throw new Error(`Image file not found: ${imagePath}`);
+  }
+  return readFileSync(imagePath).toString("base64");
+}
+
+async function imageToText(
+  imagePaths: string | string[],
+  prompt: string,
+  model: string = MODEL,
+  host: string = HOST
+): Promise<string> {
+  const paths = Array.isArray(imagePaths) ? imagePaths : [imagePaths];
+  for (const p of paths) {
+    if (!existsSync(p)) {
+      throw new Error(`Image file not found: ${p}`);
+    }
+  }
+  const images = paths.map(encodeImage);
+  const response = await ollama.chat({
+    model,
+    messages: [{ role: "user", content: prompt, images }],
+    host,
+  });
+  return response.message.content;
+}
+
+async function describeImageSimple(imagePath: string): Promise<string> {
+  return imageToText(imagePath, "What is in this image?");
+}
+
+const [,, imageArg, ...promptArgs] = process.argv;
+const imagePath = imageArg ?? "ticket.png";
+const promptText = promptArgs.length > 0
+  ? promptArgs.join(" ")
+  : "Print out the plain text in this image";
+
+const result = await imageToText(imagePath, promptText);
+console.log(result);
+```
+
+The key difference from a text-only request is the `images` field on the message, which holds an array of base64-encoded image strings. The `encodeImage` function reads a file and converts it to base64 — no external dependencies needed.
+
+You can pass a single image or multiple images. The `imageToText` function accepts either a string path or an array of paths, making it easy to compare images side by side, for example:
+
+```bash
+$ tsx ollama_describe-image.ts ticket.png "Extract the plain text from this image"
+Mark Watson Fanfares and Fireworks Flagstaff Symphony Orchestra Ardrey Memorial Auditorium Friday, September 26, 2025 7:30 PM (AZ) #1 / 2 WJNBY.1.2406.1498 Friday, September 26, 2025 @ 7:30 PM LEVEL Main SECTION Main Level ROW M SEAT 31 Price $53.00 SERVICE FEE $0.00 TICKET OPTION Early Bird Tickets TICKET Type New Subscriber C3 The unique barcodes on this ticket allow only one entry to the event. If multiple copies of an ETTicket are made, the first copy of the ETTicket to arrive at the event will gain entry after scanning and validation. Other copies of this ticket will be denied entry.
+$ 
+$ tsx ollama_describe-image.ts ticket.png "Extract the price of the ticket from this image"
+The price of the ticket is $53.00.
+```
+
+Vision models like **qwen3.5:0.8b** and **llava:7b** handle these requests locally on your machine, keeping image data private. Pull the model first with `ollama pull qwen3.5:0.8b`.
+
+The `ollama describe` npm script in `package.json` runs this file with defaults — useful for a quick test with the included `ticket.png` sample image.
+
+
 ## OpenAI-Compatible API
 
 Ollama exposes an OpenAI-compatible API endpoint, which means you can use the standard **openai** npm package to talk to local models. This is useful if you want to write code that can switch between cloud and local models by changing only the base URL:

@@ -8,16 +8,9 @@ if (!apiKey) { console.error("Set GOOGLE_API_KEY"); process.exit(1); }
 const ai = new GoogleGenAI({ apiKey });
 const prompt = "Write a one-sentence tagline for a coffee shop.";
 
-const responseLow = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: prompt,
-  config: { temperature: 0.0 },
-});
-console.log(`Temperature 0.0: ${responseLow.text}`);
-
-const responseHigh = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: prompt,
-  config: { temperature: 1.5 },
-});
-console.log(`Temperature 1.5: ${responseHigh.text}`);
+for (const temp of [0.0, 1.5]) {
+  const r = await ai.models.generateContent({
+    model: "gemini-2.5-flash", contents: prompt, config: { temperature: temp },
+  });
+  console.log(`Temperature ${temp}: ${r.text}`);
+}

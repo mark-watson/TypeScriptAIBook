@@ -3,25 +3,12 @@
 import { execSync } from "node:child_process";
 import { writeFileSync, unlinkSync } from "node:fs";
 
-function solveMiniZinc(
-  modelFile: string,
-  params: Record<string, number>
-): string {
-  const paramLines = Object.entries(params)
-    .map(([key, val]) => `${key} = ${val};`);
+function solveMiniZinc(modelFile: string, params: Record<string, number>): string {
   const paramFile = "params.dzn";
-  writeFileSync(paramFile, paramLines.join("\n"));
-
+  writeFileSync(paramFile, Object.entries(params).map(([k, v]) => `${k} = ${v};`).join("\n"));
   try {
-    const result = execSync(
-      `minizinc --solver coinbc ${modelFile} ${paramFile}`,
-      { encoding: "utf-8", timeout: 30000 }
-    );
-    return result.trim();
-  } finally {
-    try { unlinkSync(paramFile); } catch {}
-  }
+    return execSync(`minizinc --solver coinbc ${modelFile} ${paramFile}`, { encoding: "utf-8", timeout: 30000 }).trim();
+  } finally { try { unlinkSync(paramFile); } catch {} }
 }
 
-const result = solveMiniZinc("test_mzn.mzn", { n: 30, m: 200 });
-console.log(result);
+console.log(solveMiniZinc("test_mzn.mzn", { n: 30, m: 200 }));

@@ -2,13 +2,9 @@
 // Copyright 2022-2026 Mark Watson. All rights reserved.
 //
 // Commands:
-//   <text>          Ask Gemini a question (plain, no search)
-//   !<text>         Ask Gemini with Google Search grounding
-//   >               Add last answer to the persistent cache
-//   !               Clear cache entries older than one week
-//   h / help        Show help
-//   q / quit / exit Exit the REPL
-//   Ctrl-D          Exit the REPL
+//   <text>   Ask Gemini       !<text>  Ask with Google Search
+//   >        Cache last answer !       Clear old cache entries
+//   h/help   Show help         q/quit  Exit
 
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
@@ -18,197 +14,73 @@ import { GoogleGenAI } from "@google/genai";
 import { CacheEngine } from "./cache_engine.js";
 import { extractKeywords } from "./keywords.js";
 
-// ---- Configuration ----
-
 const MODEL = "gemini-2.5-flash";
 const CACHE_DB_PATH = join(homedir(), ".ai-repl-cache.db");
 
-// ---- Validate API key ----
-
 const apiKey = process.env.GOOGLE_API_KEY;
-if (!apiKey) {
-  console.error("Error: GOOGLE_API_KEY environment variable is not set.");
-  console.error("Export it before running:  export GOOGLE_API_KEY=your-key-here");
-  process.exit(1);
-}
+if (!apiKey) { console.error("Error: Set GOOGLE_API_KEY"); process.exit(1); }
 
 const ai = new GoogleGenAI({ apiKey });
-
-// ---- State ----
-
 const cache = new CacheEngine(CACHE_DB_PATH);
 let lastAnswer: string | null = null;
 
-// ---- Cache context builder ----
-
-/**
- * Retrieves cached items relevant to the query using bag-of-words
- * keyword matching, then formats them as a context preamble.
- */
-function buildContextFromCache(query: string): string {
-  const keywords = extractKeywords(query);
-  if (keywords.length === 0) return "";
-
-  const items = cache.lookup(keywords, 10);
-  if (items.length === 0) return "";
-
-  const bullets = items.map((item) => `- ${item}`).join("\n");
-  return (
-    "Use the following context from previous conversations when answering:\n\n" +
-    bullets +
-    "\n\n---\n\n"
-  );
+function buildContext(query: string): string {
+  const kw = extractKeywords(query);
+  if (!kw.length) return "";
+  const items = cache.lookup(kw, 10);
+  if (!items.length) return "";
+  return "Use the following context from previous conversations when answering:\n\n" +
+    items.map(i => `- ${i}`).join("\n") + "\n\n---\n\n";
 }
 
-// ---- Query dispatch ----
-
-/**
- * Sends a prompt to Gemini, optionally with Google Search grounding.
- * Prepends relevant cached context to the prompt.
- */
-async function askGemini(
-  prompt: string,
-  searchGrounding: boolean,
-): Promise<string> {
-  const context = buildContextFromCache(prompt);
-  const fullPrompt = context + prompt;
-
+async function askGemini(prompt: string, search: boolean): Promise<string> {
   try {
     const config: Record<string, unknown> = {};
-    if (searchGrounding) {
-      config.tools = [{ googleSearch: {} }];
-    }
-
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: fullPrompt,
-      config,
-    });
-
-    return response.text ?? "[No response from Gemini]";
-  } catch (error) {
-    return `[Error calling Gemini API: ${error instanceof Error ? error.message : error}]`;
-  }
+    if (search) config.tools = [{ googleSearch: {} }];
+    const r = await ai.models.generateContent({ model: MODEL, contents: buildContext(prompt) + prompt, config });
+    return r.text ?? "[No response from Gemini]";
+  } catch (e) { return `[Error: ${e instanceof Error ? e.message : e}]`; }
 }
 
-// ---- Help text ----
+function showAnswer(text: string) { console.log("\n" + text + "\n"); lastAnswer = text; }
 
-function printHelp(): void {
-  console.log();
-  console.log("  Gemini AI REPL");
-  console.log("  ─────────────────────────────────────────");
-  console.log("  <text>         Ask Gemini a question");
-  console.log("  !<text>        Ask with Google Search grounding");
-  console.log("  >              Add last answer to cache");
-  console.log("  !              Clear cache entries older than 1 week");
-  console.log("  h / help       Show this help");
-  console.log("  q / quit       Exit");
-  console.log("  Ctrl-D         Exit");
-  console.log("  ─────────────────────────────────────────");
-  console.log(`  Model: ${MODEL}`);
-  console.log(`  Cache: ${CACHE_DB_PATH} (${cache.count()} items)`);
-  console.log();
-}
-
-// ---- Display answer ----
-
-function displayAnswer(text: string): void {
-  console.log();
-  console.log(text);
-  console.log();
-  lastAnswer = text;
-}
-
-// ---- REPL loop ----
-
-async function replLoop(): Promise<void> {
+async function replLoop() {
   const rl = readline.createInterface({ input, output });
-
-  console.log();
-  console.log("  Gemini AI REPL  (type 'h' for help)");
-  console.log();
+  console.log("\n  Gemini AI REPL  (type 'h' for help)\n");
 
   try {
     while (true) {
       let line: string;
-      try {
-        line = await rl.question("gemini> ");
-      } catch {
-        // EOF (Ctrl-D)
-        console.log("\nGoodbye.");
-        break;
-      }
+      try { line = await rl.question("gemini> "); } catch { console.log("\nGoodbye."); break; }
+      const t = line.trim();
+      if (!t) continue;
+      if (["q", "quit", "exit"].includes(t.toLowerCase())) { console.log("Goodbye."); break; }
 
-      const trimmed = line.trim();
-
-      // Empty line — skip
-      if (trimmed === "") continue;
-
-      // Quit
-      if (["q", "quit", "exit"].includes(trimmed.toLowerCase())) {
-        console.log("Goodbye.");
-        break;
-      }
-
-      // Help
-      if (["h", "help"].includes(trimmed.toLowerCase())) {
-        printHelp();
+      if (["h", "help"].includes(t.toLowerCase())) {
+        console.log(`\n  <text>  Ask Gemini    !<text> Ask + Search\n  >      Cache answer  !      Clear old cache\n  h      Help          q      Quit\n  Model: ${MODEL}  Cache: ${CACHE_DB_PATH} (${cache.count()} items)\n`);
         continue;
       }
 
-      // ">" — cache last answer
-      if (trimmed === ">") {
-        if (lastAnswer) {
-          cache.add(lastAnswer);
-          console.log(`  [Cached. ${cache.count()} items total]`);
-        } else {
-          console.log("  [No answer to cache yet]");
-        }
+      if (t === ">") {
+        lastAnswer ? (cache.add(lastAnswer), console.log(`  [Cached. ${cache.count()} items]`)) : console.log("  [No answer yet]");
         continue;
       }
 
-      // "!" alone — clear old cache
-      if (trimmed === "!") {
-        const before = cache.count();
-        cache.clearOlderThanOneWeek();
-        const after = cache.count();
-        console.log(
-          `  [Cleared ${before - after} old entries. ${after} items remain]`,
-        );
+      if (t === "!" || (t.startsWith("!") && !t.slice(1).trim())) {
+        const b = cache.count(); cache.clearOlderThanOneWeek();
+        console.log(`  [Cleared ${b - cache.count()} old entries. ${cache.count()} remain]`);
         continue;
       }
 
-      // "!<query>" — search-grounded question
-      if (trimmed.startsWith("!")) {
-        const query = trimmed.slice(1).trim();
-        if (query === "") {
-          // Edge case: "! " with only whitespace after the !
-          const before = cache.count();
-          cache.clearOlderThanOneWeek();
-          const after = cache.count();
-          console.log(
-            `  [Cleared ${before - after} old entries. ${after} items remain]`,
-          );
-        } else {
-          console.log("  [Searching...]");
-          const answer = await askGemini(query, true);
-          displayAnswer(answer);
-        }
-        continue;
+      if (t.startsWith("!")) {
+        console.log("  [Searching...]");
+        showAnswer(await askGemini(t.slice(1).trim(), true));
+      } else {
+        console.log("  [Thinking...]");
+        showAnswer(await askGemini(t, false));
       }
-
-      // Plain question
-      console.log("  [Thinking...]");
-      const answer = await askGemini(trimmed, false);
-      displayAnswer(answer);
     }
-  } finally {
-    rl.close();
-    cache.close();
-    console.log("  [Cache closed]");
-  }
+  } finally { rl.close(); cache.close(); console.log("  [Cache closed]"); }
 }
-
-// ---- Entry point ----
 
 replLoop();

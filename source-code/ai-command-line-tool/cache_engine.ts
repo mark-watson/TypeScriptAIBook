@@ -5,79 +5,38 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-interface CacheEntry {
-  content: string;
-  createdAt: number;
-}
+interface CacheEntry { content: string; createdAt: number }
 
 /**
- * A persistent JSON-file cache that stores text entries with timestamps.
- * Supports keyword-based retrieval (bag-of-words matching) and
- * automatic expiry of entries older than one week.
- *
- * Using a JSON file keeps this project dependency-free (no native
- * SQLite compilation required) and makes the cache trivially inspectable.
+ * Persistent JSON-file cache with keyword-based retrieval.
+ * Stores text entries with timestamps; supports bag-of-words
+ * matching and automatic one-week expiry.
  */
 export class CacheEngine {
   private entries: CacheEntry[];
-  private filePath: string;
-
-  constructor(filePath: string) {
-    this.filePath = filePath;
-    if (existsSync(filePath)) {
-      const raw = readFileSync(filePath, "utf-8");
-      this.entries = JSON.parse(raw) as CacheEntry[];
-    } else {
-      this.entries = [];
-    }
+  constructor(private filePath: string) {
+    this.entries = existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : [];
   }
+  private save() { writeFileSync(this.filePath, JSON.stringify(this.entries, null, 2)); }
 
-  /** Persist the current entries to disk. */
-  private save(): void {
-    writeFileSync(this.filePath, JSON.stringify(this.entries, null, 2));
-  }
+  add(content: string) { this.entries.push({ content, createdAt: Date.now() }); this.save(); }
 
-  /** Add a text entry to the cache with the current timestamp. */
-  add(content: string): void {
-    this.entries.push({ content, createdAt: Date.now() });
-    this.save();
-  }
-
-  /**
-   * Look up cached entries that contain any of the given keywords.
-   * Returns up to `limit` matching entries, most recent first.
-   */
-  lookup(keywords: string[], limit: number = 10): string[] {
-    if (keywords.length === 0) return [];
-
-    const lowerKeywords = keywords.map((kw) => kw.toLowerCase());
-
+  lookup(keywords: string[], limit = 10): string[] {
+    const lk = keywords.map(k => k.toLowerCase());
     return this.entries
-      .filter((entry) => {
-        const lowerContent = entry.content.toLowerCase();
-        return lowerKeywords.some((kw) => lowerContent.includes(kw));
-      })
+      .filter(e => lk.some(k => e.content.toLowerCase().includes(k)))
       .sort((a, b) => b.createdAt - a.createdAt)
-      .slice(0, limit)
-      .map((entry) => entry.content);
+      .slice(0, limit).map(e => e.content);
   }
 
-  /** Return the total number of cached entries. */
-  count(): number {
-    return this.entries.length;
-  }
+  count() { return this.entries.length; }
 
-  /** Delete entries older than one week. Returns the number deleted. */
   clearOlderThanOneWeek(): number {
-    const cutoff = Date.now() - ONE_WEEK_MS;
     const before = this.entries.length;
-    this.entries = this.entries.filter((e) => e.createdAt >= cutoff);
+    this.entries = this.entries.filter(e => e.createdAt >= Date.now() - ONE_WEEK_MS);
     this.save();
     return before - this.entries.length;
   }
 
-  /** Flush to disk (called at REPL exit for safety). */
-  close(): void {
-    this.save();
-  }
+  close() { this.save(); }
 }

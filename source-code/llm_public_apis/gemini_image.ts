@@ -8,29 +8,22 @@ if (!apiKey) { console.error("Set GOOGLE_API_KEY"); process.exit(1); }
 
 const imagePath = process.argv[2] || "photo.jpg";
 if (!existsSync(imagePath)) {
-  console.error(`Image file not found: ${imagePath}`);
-  console.error("Usage: tsx gemini_image.ts <path-to-image>");
+  console.error(`Image not found: ${imagePath}\nUsage: tsx gemini_image.ts <path-to-image>`);
   process.exit(1);
 }
 
 const ai = new GoogleGenAI({ apiKey });
-
-const imageBuffer = readFileSync(imagePath);
-const base64Image = imageBuffer.toString("base64");
+const base64Image = readFileSync(imagePath).toString("base64");
 const ext = imagePath.split(".").pop()?.toLowerCase() ?? "jpeg";
-const mimeType = ext === "png" ? "image/png" : "image/jpeg";
 
 const response = await ai.models.generateContent({
   model: "gemini-2.5-flash",
-  contents: [
-    {
-      role: "user",
-      parts: [
-        { text: "Describe what you see in this image." },
-        { inlineData: { mimeType, data: base64Image } },
-      ],
-    },
-  ],
+  contents: [{
+    role: "user",
+    parts: [
+      { text: "Describe what you see in this image." },
+      { inlineData: { mimeType: ext === "png" ? "image/png" : "image/jpeg", data: base64Image } },
+    ],
+  }],
 });
-
 console.log(response.text);

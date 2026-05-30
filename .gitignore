@@ -3,3 +3,4 @@ dist/
 *.js
 !*.config.js
 .DS_Store
+.antigravitycli

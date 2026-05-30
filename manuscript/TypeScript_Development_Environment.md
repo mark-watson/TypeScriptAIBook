@@ -39,6 +39,14 @@ $ npm --version
 10.9.2
 ```
 
+As I mentioned in the3 **Preface**, on my system I take the following precaution to help make my use of JavaScript and TypeScript more secure::
+
+```
+npm config set ignore-scripts true
+# or for pnpm
+pnpm config set ignore-scripts true
+```
+
 ## Installing TypeScript and tsx
 
 TypeScript is the language compiler and **tsx** is a tool that lets you run `.ts` files directly without a separate compilation step. Install them globally:
@@ -63,7 +71,7 @@ You can now run any TypeScript file directly:
 tsx my_script.ts
 ```
 
-## Setting Up a Project
+## Creating a New Project
 
 Every source code directory in this book follows the same pattern: initialize a project with `npm init`, install the required packages, and run scripts with `tsx`. Here is a typical setup:
 
@@ -86,9 +94,15 @@ $ npm install mathjs
 $ tsx my_script.ts
 ```
 
+## Running Existing Projects in directory **source-code**
+
+Every source code directory in this book follows the same pattern: load all required libraries for the current directory with `npm install`and run examples with `tsx`.
+
+
+
 ### The tsconfig.json File
 
-The `tsconfig.json` file configures the TypeScript compiler. Here is the configuration I use throughout this book:
+The `tsconfig.json` file configures the TypeScript compiler. Here is the configuration I often use:
 
 ```json
 {

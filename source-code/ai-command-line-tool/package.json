@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "tsx ai_repl.ts"
+    "start": "tsx ai_repl.ts",
+    "test": "tsx --test test_all.ts"
   },
   "dependencies": {
     "@google/genai": "^1.0.0"

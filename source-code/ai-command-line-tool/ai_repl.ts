@@ -67,8 +67,8 @@ async function replLoop() {
       }
 
       if (t === "!" || (t.startsWith("!") && !t.slice(1).trim())) {
-        const b = cache.count(); cache.clearOlderThanOneWeek();
-        console.log(`  [Cleared ${b - cache.count()} old entries. ${cache.count()} remain]`);
+        const removed = cache.clearOlderThanOneWeek();
+        console.log(`  [Cleared ${removed} old entries. ${cache.count()} remain]`);
         continue;
       }
 

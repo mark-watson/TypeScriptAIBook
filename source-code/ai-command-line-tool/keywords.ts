@@ -14,6 +14,8 @@ const STOP = new Set([
 
 /** Extract meaningful keywords: lowercase, strip punctuation, drop stop words and short tokens. */
 export const extractKeywords = (text: string): string[] =>
-  text.toLowerCase().split(/\s+/)
-    .map(w => w.replace(/^[?!.,;:'"()]+|[?!.,;:'"()]+$/g, ""))
-    .filter(w => w.length > 2 && !STOP.has(w));
+  [...new Set(
+    text.toLowerCase().split(/\s+/)
+      .map(w => w.replace(/^[?!.,;:'"()]+|[?!.,;:'"()]+$/g, ""))
+      .filter(w => w.length > 2 && !STOP.has(w))
+  )];

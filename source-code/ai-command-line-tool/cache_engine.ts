@@ -15,16 +15,35 @@ interface CacheEntry { content: string; createdAt: number }
 export class CacheEngine {
   private entries: CacheEntry[];
   constructor(private filePath: string) {
-    this.entries = existsSync(filePath) ? JSON.parse(readFileSync(filePath, "utf-8")) : [];
+    if (existsSync(filePath)) {
+      try {
+        this.entries = JSON.parse(readFileSync(filePath, "utf-8"));
+      } catch {
+        console.warn(`Corrupt cache at ${filePath}, starting fresh`);
+        this.entries = [];
+      }
+    } else {
+      this.entries = [];
+    }
   }
   private save() { writeFileSync(this.filePath, JSON.stringify(this.entries, null, 2)); }
 
-  add(content: string) { this.entries.push({ content, createdAt: Date.now() }); this.save(); }
+  add(content: string) {
+    if (this.entries.some(e => e.content === content)) return;
+    this.entries.push({ content, createdAt: Date.now() });
+    this.save();
+  }
 
   lookup(keywords: string[], limit = 10): string[] {
-    const lk = keywords.map(k => k.toLowerCase());
+    const lk = new Set(keywords.map(k => k.toLowerCase()));
     return this.entries
-      .filter(e => lk.some(k => e.content.toLowerCase().includes(k)))
+      .filter(e => {
+        const tokens = new Set(
+          e.content.toLowerCase().split(/\s+/)
+            .map(w => w.replace(/^[?!.,;:'"()]+|[?!.,;:'"()]+$/g, ""))
+        );
+        return [...lk].some(k => tokens.has(k));
+      })
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, limit).map(e => e.content);
   }

@@ -18,35 +18,94 @@ const applyScaler = (data: number[][], s: { means: number[]; stds: number[] }) =
 const eucDist = (a: number[], b: number[]) =>
   Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));
 
+/** Partial sort via max-heap: O(n log k) instead of O(n log n). */
 function knnPredict(trainX: number[][], trainY: number[], sample: number[], k: number): number {
-  const nearest = trainX.map((p, i) => ({ d: eucDist(sample, p), l: trainY[i] }))
-    .sort((a, b) => a.d - b.d).slice(0, k);
+  const heap: { d: number; l: number }[] = [];
+  for (let i = 0; i < trainX.length; i++) {
+    const d = eucDist(sample, trainX[i]);
+    if (heap.length < k) {
+      heap.push({ d, l: trainY[i] });
+      if (heap.length === k) heap.sort((a, b) => b.d - a.d);
+    } else if (d < heap[0].d) {
+      heap[0] = { d, l: trainY[i] };
+      for (let j = 0; ; ) {
+        const left = 2 * j + 1, right = 2 * j + 2;
+        let largest = j;
+        if (left < heap.length && heap[left].d > heap[largest].d) largest = left;
+        if (right < heap.length && heap[right].d > heap[largest].d) largest = right;
+        if (largest === j) break;
+        [heap[j], heap[largest]] = [heap[largest], heap[j]];
+        j = largest;
+      }
+    }
+  }
   const votes: Record<number, number> = {};
-  for (const { l } of nearest) votes[l] = (votes[l] || 0) + 1;
+  for (const { l } of heap) votes[l] = (votes[l] || 0) + 1;
   return Number(Object.entries(votes).sort(([, a], [, b]) => b - a)[0][0]);
 }
 
-function classReport(actual: number[], predicted: number[]) {
-  console.log("              precision    recall  f1-score   support");
-  for (const cls of [0, 1]) {
-    const tp = actual.filter((a, i) => a === cls && predicted[i] === cls).length;
-    const fp = actual.filter((a, i) => a !== cls && predicted[i] === cls).length;
-    const fn = actual.filter((a, i) => a === cls && predicted[i] !== cls).length;
-    const sup = actual.filter(a => a === cls).length;
-    const pr = tp + fp > 0 ? tp / (tp + fp) : 0, re = tp + fn > 0 ? tp / (tp + fn) : 0;
-    const f1 = pr + re > 0 ? (2 * pr * re) / (pr + re) : 0;
-    console.log(`         ${cls.toFixed(1)}       ${pr.toFixed(2)}      ${re.toFixed(2)}      ${f1.toFixed(2)}         ${sup}`);
-  }
-  console.log(`    accuracy                           ${(actual.filter((a, i) => a === predicted[i]).length / actual.length).toFixed(2)}        ${actual.length}`);
+interface ClassMetrics {
+  precision: number;
+  recall: number;
+  f1: number;
+  support: number;
 }
 
-const { xTrain, yTrain, xTest, yTest } = loadData();
-const scaler = fitScaler(xTrain);
-const xTrainS = applyScaler(xTrain, scaler), xTestS = applyScaler(xTest, scaler);
-const yPred = xTestS.map(s => knnPredict(xTrainS, yTrain, s, 5));
+function computeMetrics(actual: number[], predicted: number[]): {
+  report: Record<number, ClassMetrics>;
+  accuracy: number;
+  confusionMatrix: number[][];
+} {
+  const classes = [...new Set(actual)].sort((a, b) => a - b);
+  const n = actual.length;
+  const cm: number[][] = classes.map(() => classes.map(() => 0));
+  for (let i = 0; i < n; i++) cm[actual[i]][predicted[i]]++;
 
-const cm = [[0, 0], [0, 0]];
-yTest.forEach((a, i) => cm[a][yPred[i]]++);
-console.log(`\nConfusion Matrix:\n${cm.map(r => r.join("  ")).join("\n")}`);
-console.log("\nClassification Report:");
-classReport(yTest, yPred);
+  const report: Record<number, ClassMetrics> = {};
+  for (const cls of classes) {
+    const tp = cm[cls][cls];
+    const fp = classes.reduce((s, c) => s + (c !== cls ? cm[c][cls] : 0), 0);
+    const fn = classes.reduce((s, c) => s + (c !== cls ? cm[cls][c] : 0), 0);
+    const sup = actual.filter(a => a === cls).length;
+    const pr = tp + fp > 0 ? tp / (tp + fp) : 0;
+    const re = tp + fn > 0 ? tp / (tp + fn) : 0;
+    const f1 = pr + re > 0 ? (2 * pr * re) / (pr + re) : 0;
+    report[cls] = { precision: pr, recall: re, f1, support: sup };
+  }
+  const correct = actual.filter((a, i) => a === predicted[i]).length;
+  return { report, accuracy: correct / n, confusionMatrix: cm };
+}
+
+function formatReport(actual: number[], predicted: number[]): string {
+  const { report, accuracy, confusionMatrix } = computeMetrics(actual, predicted);
+  const classes = Object.keys(report).map(Number).sort((a, b) => a - b);
+  const lines: string[] = [];
+  lines.push("              precision    recall  f1-score   support");
+  for (const cls of classes) {
+    const m = report[cls];
+    lines.push(`   ${cls}           ${m.precision.toFixed(2)}      ${m.recall.toFixed(2)}      ${m.f1.toFixed(2)}         ${m.support}`);
+  }
+  lines.push(`    accuracy                           ${accuracy.toFixed(2)}        ${actual.length}`);
+  lines.push("");
+  lines.push("Confusion Matrix:");
+  lines.push(confusionMatrix.map(r => r.join("  ")).join("\n"));
+  return lines.join("\n");
+}
+
+function main() {
+  try {
+    const { xTrain, yTrain, xTest, yTest } = loadData();
+    const scaler = fitScaler(xTrain);
+    const xTrainS = applyScaler(xTrain, scaler);
+    const xTestS = applyScaler(xTest, scaler);
+    const k = process.argv[2] ? parseInt(process.argv[2], 10) : 5;
+    console.log(`Running KNN with k=${k}...\n`);
+    const yPred = xTestS.map(s => knnPredict(xTrainS, yTrain, s, k));
+    console.log(formatReport(yTest, yPred));
+  } catch (err) {
+    console.error("Classification failed:", (err as Error).message);
+    process.exit(1);
+  }
+}
+
+main();

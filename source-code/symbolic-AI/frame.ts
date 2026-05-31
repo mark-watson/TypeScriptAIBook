@@ -8,7 +8,8 @@ class Frame {
 
   constructor(name = "") { this.name = name ? `"${name}"` : `Frame:${++Frame.counter}`; }
 
-  addSubframe(f: Frame) { f.depth = this.depth + 1; this.objects.push(f); }
+  private setDepth(d: number) { this.depth = d; }
+  addSubframe(f: Frame) { f.setDepth(this.depth + 1); this.objects.push(f); }
   addNumber(n: number) { this.objects.push(n); }
   addString(s: string) { this.objects.push(s); }
 

@@ -1,8 +1,11 @@
 /**
- * Represents a node in the graph.
+ * Represents a node in the graph structure.
+ * Each node is uniquely identified by an ID and can have an optional note.
  */
 interface Node {
+  /** Unique identifier for the node (e.g., "A", "B"). */
   id: string;
+  /** A descriptive label or information associated with the node. */
   note: string;
 }
 
@@ -18,11 +21,17 @@ interface Edge {
  * A simple Graph data structure.
  */
 class Graph {
+  /**
+   * A collection of all nodes in the graph, mapped by their unique IDs.
+   */
   private nodes: Map<string, Node> = new Map();
   private adjacencyList: Map<string, string[]> = new Map();
 
   /**
-   * Adds a node to the graph.
+   * Adds a new node to the graph and initializes its entry in the adjacency list.
+   * 
+   * @param id - The unique identifier for the new node.
+   * @param note - A description or metadata for the node.
    */
   addNode(id: string, note: string): void {
     this.nodes.set(id, { id, note });

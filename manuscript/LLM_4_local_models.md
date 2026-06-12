@@ -2,7 +2,7 @@
 
 Running language models on your own hardware gives you privacy, zero per-token cost, and the ability to work offline. The tradeoff is that local models are generally smaller and less capable than the frontier models available through cloud APIs, and running larger models requires significant GPU memory or Apple Silicon unified memory.
 
-In this chapter we focus on [Ollama](https://ollama.com), the most popular tool for running local models. Ollama handles model downloading, quantization, GPU acceleration, and exposes a simple API — you can go from zero to a running local LLM in minutes. We also briefly mention alternative tools at the end of the chapter.
+In this chapter we focus on [Ollama](https://ollama.com), the most popular tool for running local models. Ollama handles model downloading, quantization, GPU acceleration, and exposes a simple API, you can go from zero to a running local LLM in minutes. We also briefly mention alternative tools at the end of the chapter.
 
 If you want to go deeper into Ollama, including tool use, agents, RAG, and advanced configuration, see my book [Ollama in Action](https://leanpub.com/ollama-in-action).
 
@@ -51,7 +51,7 @@ Some recommended models to start with:
 | gemma3:4b | 3 GB | Google's small model, strong reasoning |
 | qwen3:4b | 2.6 GB | Excellent multilingual and coding |
 | deepseek-r1:7b | 4.7 GB | Strong reasoning with explicit chain-of-thought |
-| llava:7b | 4.7 GB | Vision model — can analyze images |
+| llava:7b | 4.7 GB | Vision model, can analyze images |
 
 
 ## Using Ollama from TypeScript
@@ -64,7 +64,7 @@ npm install ollama
 
 ### Basic Text Generation
 
-The simplest use of the Ollama SDK — send a prompt and print the response:
+The simplest use of the Ollama SDK, send a prompt and print the response:
 
 ```typescript
 // ollama_text.ts - Basic text generation with a local model
@@ -190,14 +190,14 @@ for (const q of [
 console.log(`(Conversation has ${assistant.messageCount} messages)`);
 ```
 
-Note that unlike cloud APIs, keeping long conversation histories in local models is free — there are no per-token costs. The main constraint is the model's context window size.
+Note that unlike cloud APIs, keeping long conversation histories in local models is free, there are no per-token costs. The main constraint is the model's context window size.
 
 
 ## Describe Content of Images
 
 Here we look at the example `ollama_describe-image.ts` that can read images and describe what is on the image. Here I use an image of a symphony ticket.
 
-Many Ollama models support vision — they can accept images alongside text and describe their contents. To use this, pass base64-encoded images as an `images` array on the user message.
+Many Ollama models support vision, they can accept images alongside text and describe their contents. To use this, pass base64-encoded images as an `images` array on the user message.
 
 ```typescript
 // ollama_describe-image.ts - Send images to Ollama vision models for description
@@ -227,7 +227,7 @@ const result = await imageToText(
 console.log(result);
 ```
 
-The key difference from a text-only request is the `images` field on the message, which holds an array of base64-encoded image strings. The `readFileSync(...).toString("base64")` call converts a file to base64 inline — no external dependencies needed.
+The key difference from a text-only request is the `images` field on the message, which holds an array of base64-encoded image strings. The `readFileSync(...).toString("base64")` call converts a file to base64 inline, no external dependencies needed.
 
 You can pass a single image or multiple images. The `imageToText` function accepts either a string path or an array of paths, making it easy to compare images side by side, for example:
 
@@ -241,15 +241,15 @@ The price of the ticket is $53.00.
 
 Vision models like **qwen3.5:0.8b** and **llava:7b** handle these requests locally on your machine, keeping image data private. Pull the model first with `ollama pull qwen3.5:0.8b`.
 
-The `ollama describe` npm script in `package.json` runs this file with defaults — useful for a quick test with the included `ticket.png` sample image.
+The `ollama describe` npm script in `package.json` runs this file with defaults, useful for a quick test with the included `ticket.png` sample image.
 
 {pagebreak}
 
 ## Adding Web Search Tools
 
-The Ollama Cloud API provides access to larger models like `gpt-oss:120b-cloud` that support function calling — the model can request external tools during a conversation. This enables an agent loop pattern where the model decides when to search the web or fetch a URL, your code executes those actions, and the results feed back into the model's context.
+The Ollama Cloud API provides access to larger models like `gpt-oss:120b-cloud` that support function calling, the model can request external tools during a conversation. This enables an agent loop pattern where the model decides when to search the web or fetch a URL, your code executes those actions, and the results feed back into the model's context.
 
-The example `ollama-cloud-search.ts` defines two tools — `web_search` and `web_fetch` — and runs an agent loop that calls the Ollama Cloud API, executes any requested tool calls, and continues until the model produces a final answer.
+The example `ollama-cloud-search.ts` defines two tools, `web_search` and `web_fetch`, and runs an agent loop that calls the Ollama Cloud API, executes any requested tool calls, and continues until the model produces a final answer.
 
 ```typescript
 // ollama-cloud-search.ts - Agent loop using Ollama Cloud API
@@ -351,7 +351,7 @@ export {};
 
 The **tool schemas** (built by the `mkTool` helper) define what each tool does and the parameters it accepts. These schemas follow the OpenAI function-calling format, which the Ollama Cloud API uses. When you include the `tools` array in the request body, the model can decide to call one or more tools instead of (or in addition to) returning text.
 
-The tool call response from the model includes a `tool_calls` array with the function name and arguments. Your code executes the tool — for `web_search`, that means hitting the DuckDuckGo API; for `web_fetch`, fetching the URL with a 15-second timeout and truncating the result to 4000 characters to stay within model context limits.
+The tool call response from the model includes a `tool_calls` array with the function name and arguments. Your code executes the tool, for `web_search`, that means hitting the DuckDuckGo API; for `web_fetch`, fetching the URL with a 15-second timeout and truncating the result to 4000 characters to stay within model context limits.
 
 Each tool result is appended to the conversation as a message with `role: "tool"` and `tool_name` set to the function name. The loop then calls the API again so the model can process the results and either request more tools or produce a final answer.
 
@@ -373,7 +373,7 @@ Final Answer: The current price of gold is $2,034.50 per ounce. As of 2025, Koji
 
 The agent made two parallel web search calls, received the results, and synthesized them into a final answer. The `cloud-search` npm script in `package.json` runs this file with defaults, or you can pass a custom query as command-line arguments.
 
-Unlike local models, the Ollama Cloud API routes your request to larger hosted models, which have stronger reasoning and more up-to-date knowledge. The tradeoff is that requests leave your machine and you pay for API usage — but with the benefit of tool-calling capabilities that enable this agent pattern.
+Unlike local models, the Ollama Cloud API routes your request to larger hosted models, which have stronger reasoning and more up-to-date knowledge. The tradeoff is that requests leave your machine and you pay for API usage, but with the benefit of tool-calling capabilities that enable this agent pattern.
 
 
 ## OpenAI-Compatible API
@@ -399,7 +399,7 @@ const response = await client.chat.completions.create({
 console.log(response.choices[0].message.content);
 ```
 
-This compatibility layer means you can prototype with local models and then switch to OpenAI, Gemini, or another provider by changing the client configuration — the rest of your code stays the same.
+This compatibility layer means you can prototype with local models and then switch to OpenAI, Gemini, or another provider by changing the client configuration, the rest of your code stays the same.
 
 
 ## Alternative Tools for Running Local Models
@@ -431,7 +431,7 @@ On Linux and Windows, a dedicated NVIDIA GPU with sufficient VRAM provides the b
 
 ## Summary
 
-Running LLMs locally with Ollama gives you a private, cost-free, offline-capable alternative to cloud APIs. The setup is straightforward — install Ollama, pull a model, and start making API calls from TypeScript. Features like streaming, conversation memory, prompt caching, and reasoning models make local models practical for many real applications.
+Running LLMs locally with Ollama gives you a private, cost-free, offline-capable alternative to cloud APIs. The setup is straightforward, install Ollama, pull a model, and start making API calls from TypeScript. Features like streaming, conversation memory, prompt caching, and reasoning models make local models practical for many real applications.
 
-The main tradeoff is capability: the largest models that run locally (7-14B parameters on typical hardware) are less capable than frontier cloud models with hundreds of billions of parameters. For many tasks — code assistance, text summarization, data extraction, conversational interfaces — local models perform well enough, and the privacy and cost benefits make them the better choice.
+The main tradeoff is capability: the largest models that run locally (7-14B parameters on typical hardware) are less capable than frontier cloud models with hundreds of billions of parameters. For many tasks, code assistance, text summarization, data extraction, conversational interfaces, local models perform well enough, and the privacy and cost benefits make them the better choice.
 

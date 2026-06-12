@@ -20,9 +20,9 @@ So, Deep Learning is a subfield of machine learning that is focused on the desig
 
 ## Example Material
 
-Here we cover a single example of what I think of as "classic machine learning" — a K-Nearest Neighbors classifier implemented from scratch in TypeScript. Later we cover deep learning in three separate chapters. Deep learning models are more general and powerful but it is important to recognize the types of problems that can be solved using the simpler techniques.
+Here we cover a single example of what I think of as "classic machine learning", a K-Nearest Neighbors classifier implemented from scratch in TypeScript. Later we cover deep learning in three separate chapters. Deep learning models are more general and powerful but it is important to recognize the types of problems that can be solved using the simpler techniques.
 
-The only requirements for this chapter are Node.js and TypeScript — no external libraries needed. We implement KNN from scratch to demonstrate both the algorithm and TypeScript's suitability for numerical computing.
+The only requirements for this chapter are Node.js and TypeScript, no external libraries needed. We implement KNN from scratch to demonstrate both the algorithm and TypeScript's suitability for numerical computing.
 
 The examples for this chapter are in the directory **source-code/machine-learning**.
 

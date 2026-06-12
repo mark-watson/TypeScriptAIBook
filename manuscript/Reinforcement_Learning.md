@@ -2,7 +2,7 @@
 
 Reinforcement Learning has been used in various applications such as robotics, game playing, recommendation systems, and more. Reinforcement Learning (RL) is a broad topic and we will only cover basic aspects of RL.
 
-No external libraries are required for this chapter — we implement Q-learning from scratch in TypeScript.
+No external libraries are required for this chapter, we implement Q-learning from scratch in TypeScript.
 
 The examples for this chapter are in the directory **source-code/reinforcement_learning**.
 
@@ -106,7 +106,7 @@ When the transition and reward models are unknown, the agent must learn through 
 
 The Q-learning update rule is:
 
-Q(s,a) ← Q(s,a) + α [ r + γ · max_a' Q(s',a') — Q(s,a) ]
+Q(s,a) ← Q(s,a) + α [ r + γ · max_a' Q(s',a') - Q(s,a) ]
 
 We implement a FrozenLake-style environment and Q-learning agent entirely in TypeScript:
 
@@ -194,5 +194,5 @@ In this chapter we covered:
 
 If this chapter sparked your interest, I encourage you to work through the Coursera specialization by Martha and Adam White and the Sutton/Barto book.
 
-I tagged this chapter as optional material because I believe most readers will get more immediate value from mastering deep learning and pre-trained models. But if you find yourself working on sequential decision-making problems — robotics, game AI, resource allocation, dynamic pricing — the RL toolkit becomes indispensable.
+I tagged this chapter as optional material because I believe most readers will get more immediate value from mastering deep learning and pre-trained models. But if you find yourself working on sequential decision-making problems, robotics, game AI, resource allocation, dynamic pricing, the RL toolkit becomes indispensable.
 

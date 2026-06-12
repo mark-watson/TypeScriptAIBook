@@ -1,6 +1,6 @@
 # A TypeScript Tutorial for Command-Line AI Programs
 
-This chapter is a focused TypeScript tutorial covering the language features you will encounter throughout this book. All examples are command-line programs — no browser, DOM, or UI framework is involved. If you are already comfortable with TypeScript you can skip this chapter and use it as a later as a reference.
+This chapter is a focused TypeScript tutorial covering the language features you will encounter throughout this book. All examples are command-line programs, no browser, DOM, or UI framework is involved. If you are already comfortable with TypeScript you can skip this chapter and use it as a later as a reference.
 
 We assume you have a working Node.js and tsx installation as described in the previous chapter.
 
@@ -16,7 +16,7 @@ const name: string = "scikit-learn";
 const version: number = 1.5;
 const isStable: boolean = true;
 
-// Type inference — TypeScript figures out the type
+// Type inference, TypeScript figures out the type
 const framework = "TensorFlow";  // inferred as string
 const layers = 96;               // inferred as number
 ```
@@ -66,7 +66,7 @@ const sample: DataSample = {
   label: "setosa",
 };
 
-// Type alias — similar to interface but also works for unions
+// Type alias, similar to interface but also works for unions
 type Prediction = {
   label: string;
   score: number;
@@ -241,7 +241,7 @@ async function chat(prompt: string): Promise<ChatResponse> {
 
 ## Classes
 
-Classes in TypeScript are useful for encapsulating state and behavior — we use them for models, agents, and data structures throughout this book.
+Classes in TypeScript are useful for encapsulating state and behavior, we use them for models, agents, and data structures throughout this book.
 
 ```typescript
 class KNNClassifier {
@@ -337,7 +337,7 @@ const result = dotProduct([1, 2, 3], [4, 5, 6]);
 console.log(result);  // 32
 ```
 
-Note the `.js` extension in the import path — this is required when using Node.js ES modules with TypeScript's `NodeNext` module resolution.
+Note the `.js` extension in the import path, this is required when using Node.js ES modules with TypeScript's `NodeNext` module resolution.
 
 ### Default Exports
 
@@ -404,11 +404,11 @@ Reading and writing files is common for loading datasets and saving results:
 import { readFileSync, writeFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 
-// Synchronous — simple and fine for loading config/data at startup
+// Synchronous, simple and fine for loading config/data at startup
 const csvData = readFileSync("data.csv", "utf-8");
 const lines = csvData.split("\n");
 
-// Asynchronous — preferred for larger files or in async contexts
+// Asynchronous, preferred for larger files or in async contexts
 async function loadDataset(path: string): Promise<number[][]> {
   const content = await readFile(path, "utf-8");
   return content
@@ -459,7 +459,7 @@ enum ModelType {
   Clustering = "clustering",
 }
 
-// Literal type — lightweight alternative to enums
+// Literal type, lightweight alternative to enums
 type Activation = "relu" | "sigmoid" | "tanh" | "softmax";
 
 function createLayer(units: number, activation: Activation) {
@@ -587,7 +587,7 @@ for (let epoch = 0; epoch < 100; epoch++) {
 This chapter covered the TypeScript features you will encounter throughout this book:
 
 - **Types and interfaces** for defining data shapes and catching errors at compile time.
-- **Async/await** for clean, readable API calls — essential for LLM and cloud service integration.
+- **Async/await** for clean, readable API calls: essential for LLM and cloud service integration.
 - **Classes** for encapsulating model logic, agents, and data structures.
 - **Modules** for organizing code across files.
 - **Generics** for writing reusable, type-safe utility functions.

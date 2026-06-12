@@ -31,7 +31,7 @@ All models will be downloaded automatically to **~/.cache/huggingface** the firs
 
 ### Summarizing Text Using a Pre-trained Model on Your Laptop
 
-We use a text summarization model for generating concise summaries. This model runs locally on your laptop — no API keys or cloud services needed:
+We use a text summarization model for generating concise summaries. This model runs locally on your laptop, no API keys or cloud services needed:
 
 ```typescript
 // summarization.ts - Text summarization with a local model
@@ -77,7 +77,7 @@ Court's majority had ruled on budget matters.
 
 ### Zero Shot Classification Using a Local Model
 
-Zero shot classification models work by specifying which classification labels you want to assign to input texts — no pre-training on labeled examples is required:
+Zero shot classification models work by specifying which classification labels you want to assign to input texts, no pre-training on labeled examples is required:
 
 ```typescript
 // zero_shot_classification.ts
@@ -170,7 +170,7 @@ A common use case is a customer service chatbot where we match the user's questi
 
 ## Deep Learning Natural Language Processing Wrap-up
 
-In this chapter we have seen examples of how effective deep learning is for NLP using the Hugging Face Transformers.js library in TypeScript. All three examples — summarization, zero-shot classification, and sentence similarity — run locally on your laptop without requiring API keys or cloud services.
+In this chapter we have seen examples of how effective deep learning is for NLP using the Hugging Face Transformers.js library in TypeScript. All three examples, summarization, zero-shot classification, and sentence similarity, run locally on your laptop without requiring API keys or cloud services.
 
 I worked on other methods of NLP over a 25-year period and I ask you, dear reader, to take my word on this: deep learning has revolutionized NLP and for almost all practical NLP applications, deep learning libraries and pre-trained models from organizations like Hugging Face should be the first thing that you consider using.
 

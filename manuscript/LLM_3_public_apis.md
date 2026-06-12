@@ -2,7 +2,7 @@
 
 The fastest way to use large language models is through cloud APIs. Google, OpenAI, and Anthropic all offer APIs that give you access to their most capable models with just a few lines of TypeScript code. You don't need a GPU, you don't need to download model weights, and you can start building applications in minutes.
 
-In this chapter we work through practical examples using the Google Gemini API and the OpenAI API. Both provide TypeScript/JavaScript client libraries that handle authentication, request formatting, and response parsing. The patterns you learn here apply to other API providers as well — the core concepts of sending prompts, receiving completions, and managing conversations are the same across providers.
+In this chapter we work through practical examples using the Google Gemini API and the OpenAI API. Both provide TypeScript/JavaScript client libraries that handle authentication, request formatting, and response parsing. The patterns you learn here apply to other API providers as well, the core concepts of sending prompts, receiving completions, and managing conversations are the same across providers.
 
 The examples for this chapter are in the directory **source-code/llm_public_apis**.
 
@@ -27,7 +27,7 @@ Store your API key in an environment variable:
 export GOOGLE_API_KEY="your-api-key-here"
 ```
 
-Here is the simplest possible example — send a prompt to Gemini and print the response:
+Here is the simplest possible example, send a prompt to Gemini and print the response:
 
 ```typescript
 // gemini_text.ts - Basic text generation with Google Gemini
@@ -111,7 +111,7 @@ for (const temp of [0.0, 1.5]) {
 }
 ```
 
-For most practical applications — code generation, data extraction, question answering — use a low temperature (0.0 to 0.3). For creative writing and brainstorming, higher temperatures (0.7 to 1.5) produce more interesting results.
+For most practical applications, code generation, data extraction, question answering, use a low temperature (0.0 to 0.3). For creative writing and brainstorming, higher temperatures (0.7 to 1.5) produce more interesting results.
 
 
 ## Thinking Models
@@ -226,7 +226,7 @@ console.log(response.text);
 
 ## Structured Output
 
-For many applications you need the model to return data in a specific format — JSON, CSV, or a particular schema. LLMs can be instructed to produce structured output through careful prompting.
+For many applications you need the model to return data in a specific format, JSON, CSV, or a particular schema. LLMs can be instructed to produce structured output through careful prompting.
 
 ```typescript
 // gemini_structured.ts - Getting structured JSON output from Gemini
@@ -254,7 +254,7 @@ const result = JSON.parse(jsonStr);
 console.log(JSON.stringify(result, null, 2));
 ```
 
-Using temperature 0.0 is important for structured output — you want the model to be deterministic and precise rather than creative.
+Using temperature 0.0 is important for structured output, you want the model to be deterministic and precise rather than creative.
 
 
 ## Practical Considerations
@@ -303,7 +303,7 @@ Any data you send to an API is transmitted to the provider's servers. For sensit
 
 Using LLMs through public APIs is the fastest path from idea to working application. The core pattern is simple across all providers: create a client, send a prompt, process the response. The richness comes from features like multi-turn conversations, multimodal input, web search, structured output, and thinking modes.
 
-TypeScript is an excellent language for LLM API integration — the official SDKs from Google and OpenAI provide full type definitions, making it easy to discover capabilities and catch errors at compile time.
+TypeScript is an excellent language for LLM API integration, the official SDKs from Google and OpenAI provide full type definitions, making it easy to discover capabilities and catch errors at compile time.
 
 In the next chapter we cover the alternative approach: running open-weights models locally on your own hardware, which offers privacy, no per-token cost, and offline operation at the expense of model capability and the need for suitable hardware.
 

@@ -130,7 +130,7 @@ Classification Report:
     accuracy                           0.93        15
 ```
 
-The model achieves 93% accuracy on the test set — matching the performance of our KNN classifier from the earlier chapter. The loss decreases steadily during training.
+The model achieves 93% accuracy on the test set, matching the performance of our KNN classifier from the earlier chapter. The loss decreases steadily during training.
 
 You can compare this TensorFlow.js example to our similar classification example using the KNN algorithm. The deep learning approach requires more code but gives us full control over the model architecture, training process, and the ability to scale to much larger and more complex problems.
 

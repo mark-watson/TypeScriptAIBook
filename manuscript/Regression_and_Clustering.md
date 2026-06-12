@@ -2,7 +2,7 @@
 
 In the previous chapter we implemented a K-Nearest Neighbors classifier from scratch in TypeScript. Here we expand our coverage of "classic" machine learning with two more fundamental techniques: **regression** for predicting continuous values, and **clustering** for discovering groups in data without labeled targets.
 
-No external libraries are required for this chapter — we implement everything from scratch in TypeScript.
+No external libraries are required for this chapter, we implement everything from scratch in TypeScript.
 
 The examples for this chapter are in the directory **source-code/regression_and_clustering**.
 
@@ -23,7 +23,7 @@ We will use a housing dataset (a subset of the California Housing dataset export
 
 ### Linear Regression
 
-Our first example fits a linear regression model using the normal equation — a closed-form solution that computes the optimal weights directly:
+Our first example fits a linear regression model using the normal equation, a closed-form solution that computes the optimal weights directly:
 
 ```typescript
 import { readFileSync } from "node:fs";
@@ -103,7 +103,7 @@ featureNames.forEach((name, i) => {
 });
 ```
 
-Because we scaled the features, the coefficients tell us the relative importance of each feature. **MedInc** (median income) typically has the largest positive coefficient, confirming that income is the strongest predictor of housing prices. The geographic features (**Latitude** and **Longitude**) are also very influential — location matters!
+Because we scaled the features, the coefficients tell us the relative importance of each feature. **MedInc** (median income) typically has the largest positive coefficient, confirming that income is the strongest predictor of housing prices. The geographic features (**Latitude** and **Longitude**) are also very influential, location matters!
 
 To evaluate a regression model, we use different metrics than classification:
 
@@ -114,7 +114,7 @@ To evaluate a regression model, we use different metrics than classification:
 
 ## Clustering: Discovering Groups in Data
 
-Clustering is an **unsupervised** learning technique — unlike classification and regression, we do not provide labeled targets. Instead, the algorithm discovers natural groupings in the data.
+Clustering is an **unsupervised** learning technique, unlike classification and regression, we do not provide labeled targets. Instead, the algorithm discovers natural groupings in the data.
 
 K-Means is the most widely used clustering algorithm. It works by:
 
@@ -201,5 +201,5 @@ In this chapter we covered two fundamental machine learning techniques beyond cl
 - **Regression** lets us predict continuous values. We saw that even simple linear regression can be informative, and that feature coefficients reveal which inputs drive predictions.
 - **Clustering** discovers structure in unlabeled data. We used silhouette scores to evaluate cluster quality and cross-tabulations to compare clusters against known labels.
 
-Together with the classification example in the previous chapter, you now have hands-on experience with the three core tasks of classic machine learning — all implemented from scratch in TypeScript. In the next chapter we will explore the data preparation work that comes *before* training any model.
+Together with the classification example in the previous chapter, you now have hands-on experience with the three core tasks of classic machine learning, all implemented from scratch in TypeScript. In the next chapter we will explore the data preparation work that comes *before* training any model.
 

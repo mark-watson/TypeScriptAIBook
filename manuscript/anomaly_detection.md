@@ -4,9 +4,9 @@ Anomaly detection is a technique for finding data points that don't fit the norm
 
 The core idea is simple: learn what "normal" looks like, then flag anything that deviates too far from that model.
 
-In this chapter we build a Gaussian anomaly detector from scratch in TypeScript and apply it to the **Wisconsin Diagnostic Breast Cancer** dataset. The dataset contains 647 samples of cell measurements, each labeled as either benign (normal) or malignant (anomalous). Our goal is to train a model on mostly normal data and then use it to identify anomalies — samples that the model considers unusual.
+In this chapter we build a Gaussian anomaly detector from scratch in TypeScript and apply it to the **Wisconsin Diagnostic Breast Cancer** dataset. The dataset contains 647 samples of cell measurements, each labeled as either benign (normal) or malignant (anomalous). Our goal is to train a model on mostly normal data and then use it to identify anomalies, samples that the model considers unusual.
 
-The implementation uses only Node.js built-in modules — no external dependencies are required.
+The implementation uses only Node.js built-in modules, no external dependencies are required.
 
 The examples for this chapter are in the directory **source-code/anomaly_detection**.
 
@@ -16,14 +16,14 @@ Before diving into the code, let's understand the key idea behind our detector. 
 
 Every Gaussian distribution is characterized by two numbers:
 
-- **Mean (μ)** — the average value. This is the center of the bell curve.
-- **Variance (σ²)** — how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
+- **Mean (μ)**: the average value. This is the center of the bell curve.
+- **Variance (σ²)**: how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
 
 The **Gaussian probability density function (PDF)** tells us how likely a particular value is, given our distribution:
 
     p(x) = (1 / (√(2π) · σ)) · exp(-(x - μ)² / (2σ²))
 
-If we compute `p(x)` and get a high number, the value `x` fits well with our model of "normal." If `p(x)` is very low, then `x` is far from the average — it's an anomaly.
+If we compute `p(x)` and get a high number, the value `x` fits well with our model of "normal." If `p(x)` is very low, then `x` is far from the average, it's an anomaly.
 
 ## How the Detector Works
 
@@ -43,8 +43,8 @@ The dataset contains 647 samples with 9 numeric features each (such as "Clump Th
 
 The raw features are integer-valued and skewed, which is not ideal for a Gaussian model. We apply two preprocessing steps:
 
-- **Log transform** — applying `log(x + 1.2)` to each feature makes the distribution more bell-shaped.
-- **Min-max normalization** — scaling each row's features to the range [0, 1] so that all features contribute equally.
+- **Log transform**: applying `log(x + 1.2)` to each feature makes the distribution more bell-shaped.
+- **Min-max normalization**: scaling each row's features to the range [0, 1] so that all features contribute equally.
 
 ## Project Structure
 
@@ -78,7 +78,7 @@ export interface Detector {
 }
 ```
 
-The `mu` field holds the per-feature means, `sigmaSq` holds the per-feature variances, and `bestEps` is the learned epsilon threshold. The three data splits — training, cross-validation, and testing — are stored so we can use them during the training process.
+The `mu` field holds the per-feature means, `sigmaSq` holds the per-feature variances, and `bestEps` is the learned epsilon threshold. The three data splits, training, cross-validation, and testing, are stored so we can use them during the training process.
 
 ### Computing Mean and Variance
 
@@ -96,7 +96,7 @@ export function computeMu(examples: number[][], nf: number): number[] {
 
 This is straightforward: sum all values for each feature, then divide by the number of examples. The inner loop iterates over features and accumulates into the `mu` array.
 
-The `computeSigmaSq` function calculates the variance — how much each feature's values deviate from the mean:
+The `computeSigmaSq` function calculates the variance, how much each feature's values deviate from the mean:
 
 ```typescript
 export function computeSigmaSq(examples: number[][], mu: number[], nf: number): number[] {
@@ -132,7 +132,7 @@ export function gaussianP(x: number[], mu: number[], sigmaSq: number[], nf: numb
 Let's trace through what happens for one feature:
 
 1. We retrieve the variance `s2` and compute the standard deviation `sigma = √s2`.
-2. We compute `diff` — how far this sample's value is from the mean.
+2. We compute `diff`: how far this sample's value is from the mean.
 3. The exponent is `-(diff²) / (2 · σ²)`. When `diff` is large (the value is far from the mean), this exponent becomes a large negative number, making `Math.exp(exponent)` very small.
 4. We multiply by the normalization constant `1 / (√(2π) · σ)` to get a proper probability density.
 5. We sum these per-feature probabilities and divide by the number of features to get an average.
@@ -159,7 +159,7 @@ export function train(det: Detector): Detector {
 }
 ```
 
-This tries 200 epsilon values from 0.001 to 1.0 in steps of 0.005. For each value, `trainHelper` counts how many cross-validation examples are misclassified. The epsilon with the fewest errors wins. The `<=` comparison (rather than `<`) ensures that when multiple epsilon values tie, we pick the highest one — this gives the decision boundary more margin and tends to generalize better.
+This tries 200 epsilon values from 0.001 to 1.0 in steps of 0.005. For each value, `trainHelper` counts how many cross-validation examples are misclassified. The epsilon with the fewest errors wins. The `<=` comparison (rather than `<`) ensures that when multiple epsilon values tie, we pick the highest one, this gives the decision boundary more margin and tends to generalize better.
 
 The `trainHelper` function does one pass: it computes the variance from the training data, then counts cross-validation errors for the given epsilon:
 
@@ -181,9 +181,9 @@ function trainHelper(det: Detector, epsilon: number): number {
 
 The `testModel` function evaluates the trained detector on held-out test data and computes three standard metrics:
 
-- **Precision** — of the samples flagged as anomalies, what fraction actually are? (Measures false alarm rate.)
-- **Recall** — of the actual anomalies, what fraction did we catch? (Measures miss rate.)
-- **F1 score** — the harmonic mean of precision and recall. An F1 of 1.0 means perfect detection with no false alarms.
+- **Precision**: of the samples flagged as anomalies, what fraction actually are? (Measures false alarm rate.)
+- **Recall**: of the actual anomalies, what fraction did we catch? (Measures miss rate.)
+- **F1 score**: the harmonic mean of precision and recall. An F1 of 1.0 means perfect detection with no false alarms.
 
 ```typescript
 export function testModel(det: Detector, epsilon: number) {
@@ -231,9 +231,9 @@ function preprocessWisconsin(rows: number[][]): number[][] {
 
 Each row goes through three transformations:
 
-1. **Scale by 0.1** — the raw values are integers 1–10; dividing by 10 puts them in [0.1, 1.0].
-2. **Log transform** — `log(x + 1.2)` pushes the distribution toward a bell shape. The offset 1.2 ensures we never take the log of zero.
-3. **Per-row min-max normalization** — maps values to [0, 1] so that all features contribute equally. The guard for `range < 1e-10` handles the rare case where all features in a single row have the same value (which would cause a division by zero).
+1. **Scale by 0.1**: the raw values are integers 1–10; dividing by 10 puts them in [0.1, 1.0].
+2. **Log transform**: `log(x + 1.2)` pushes the distribution toward a bell shape. The offset 1.2 ensures we never take the log of zero.
+3. **Per-row min-max normalization**: maps values to [0, 1] so that all features contribute equally. The guard for `range < 1e-10` handles the rare case where all features in a single row have the same value (which would cause a division by zero).
 
 Finally, the target label is remapped from {2, 4} to {0, 1}.
 
@@ -280,7 +280,7 @@ All assertions passed.
 === Test complete ===
 ```
 
-The detector achieves an F1 score above 0.85 — meaning it correctly identifies most malignant samples while producing few false alarms. This is a strong result for such a simple model, and demonstrates that the Gaussian approach works well when the normal data is roughly bell-curve shaped (which our log transform helps ensure).
+The detector achieves an F1 score above 0.85, meaning it correctly identifies most malignant samples while producing few false alarms. This is a strong result for such a simple model, and demonstrates that the Gaussian approach works well when the normal data is roughly bell-curve shaped (which our log transform helps ensure).
 
 ## Using the API in Your Own Code
 
@@ -299,18 +299,18 @@ if (isAnomaly(det, someFeatureVector)) {
 }
 ```
 
-The `isAnomaly` function returns `true` if the detector considers the input vector anomalous and `false` otherwise. This makes it easy to integrate into a larger pipeline — for example, flagging suspicious transactions in a stream of financial data.
+The `isAnomaly` function returns `true` if the detector considers the input vector anomalous and `false` otherwise. This makes it easy to integrate into a larger pipeline, for example, flagging suspicious transactions in a stream of financial data.
 
 ## Understanding the Evaluation Metrics
 
 If you are new to machine learning, the evaluation output deserves a closer look:
 
-- **True positives (TP)** — anomalies correctly identified as anomalies.
-- **True negatives (TN)** — normal samples correctly identified as normal.
-- **False positives (FP)** — normal samples incorrectly flagged as anomalies (false alarms).
-- **False negatives (FN)** — anomalies that slipped through undetected (misses).
+- **True positives (TP)**: anomalies correctly identified as anomalies.
+- **True negatives (TN)**: normal samples correctly identified as normal.
+- **False positives (FP)**: normal samples incorrectly flagged as anomalies (false alarms).
+- **False negatives (FN)**: anomalies that slipped through undetected (misses).
 
-In medical diagnosis, false negatives are especially dangerous — a malignant tumor classified as benign could delay treatment. Our detector's high recall (above 0.85) means it catches nearly all anomalies, at the cost of a few false alarms. This is generally the right tradeoff for safety-critical applications.
+In medical diagnosis, false negatives are especially dangerous, a malignant tumor classified as benign could delay treatment. Our detector's high recall (above 0.85) means it catches nearly all anomalies, at the cost of a few false alarms. This is generally the right tradeoff for safety-critical applications.
 
 ## Wrap Up
 
@@ -320,8 +320,8 @@ We built a Gaussian anomaly detector from scratch, using nothing but TypeScript'
 2. Score new samples by how well they fit the model.
 3. Use cross-validation to find the best decision threshold.
 
-This technique works best when you have many normal examples and relatively few anomalies — exactly the scenario where traditional classification struggles because there aren't enough positive examples to learn from.
+This technique works best when you have many normal examples and relatively few anomalies, exactly the scenario where traditional classification struggles because there aren't enough positive examples to learn from.
 
-The code in this chapter can be applied to any numeric dataset where you need to detect outliers or unusual patterns. The algorithm is also fast — training on 648 examples completes in milliseconds, and scoring a new sample requires only a single pass through the feature vector.
+The code in this chapter can be applied to any numeric dataset where you need to detect outliers or unusual patterns. The algorithm is also fast, training on 648 examples completes in milliseconds, and scoring a new sample requires only a single pass through the feature vector.
 
 

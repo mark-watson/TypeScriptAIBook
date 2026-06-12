@@ -4,11 +4,11 @@ Dear reader, I have been fascinated by game programming since the 1970s. In addi
 
 **Note: I utilized the DeepSeek v4 Pro model to help me write the software in this chapter.**
 
-A chess engine is one of the classic challenges in AI programming. Unlike machine learning approaches that learn from data, a chess engine relies on **search** — exploring possible sequences of moves and counter-moves to find the best continuation from any given position. The challenge is that chess has a branching factor of roughly 35 legal moves per position, so a naive search to even 4 moves deep would examine over a million positions. The art of chess engine design lies in pruning the search tree aggressively without missing important tactics.
+A chess engine is one of the classic challenges in AI programming. Unlike machine learning approaches that learn from data, a chess engine relies on **search**, exploring possible sequences of moves and counter-moves to find the best continuation from any given position. The challenge is that chess has a branching factor of roughly 35 legal moves per position, so a naive search to even 4 moves deep would examine over a million positions. The art of chess engine design lies in pruning the search tree aggressively without missing important tactics.
 
-In this chapter we build a complete chess engine and interactive game from scratch in TypeScript. The engine handles all standard chess rules — castling, en passant, pawn promotion, check, checkmate, and stalemate — and includes an AI opponent powered by **negamax search with alpha-beta pruning**, a **transposition table**, and **iterative deepening**. The search reaches depth 4–6 in well under a second, which is strong enough to challenge a casual player.
+In this chapter we build a complete chess engine and interactive game from scratch in TypeScript. The engine handles all standard chess rules, castling, en passant, pawn promotion, check, checkmate, and stalemate, and includes an AI opponent powered by **negamax search with alpha-beta pruning**, a **transposition table**, and **iterative deepening**. The search reaches depth 4–6 in well under a second, which is strong enough to challenge a casual player.
 
-The implementation uses only Node.js built-in modules — no external dependencies are required.
+The implementation uses only Node.js built-in modules, no external dependencies are required.
 
 The examples for this chapter are in the directory **source-code/chess-game**.
 
@@ -16,13 +16,13 @@ The examples for this chapter are in the directory **source-code/chess-game**.
 
 Before diving into the code, let's understand the four components every chess engine needs:
 
-1. **Board representation** — a data structure that stores piece positions, whose turn it is, castling rights, and other game state. It must support fast move execution and undo.
+1. **Board representation**: a data structure that stores piece positions, whose turn it is, castling rights, and other game state. It must support fast move execution and undo.
 
-2. **Move generation** — given a board position, produce all legal moves the current player can make. This is the most mechanically complex part: pawns move differently from knights, bishops slide along diagonals, castling requires empty squares, and no move can leave your own king in check.
+2. **Move generation**: given a board position, produce all legal moves the current player can make. This is the most mechanically complex part: pawns move differently from knights, bishops slide along diagonals, castling requires empty squares, and no move can leave your own king in check.
 
-3. **Evaluation** — assign a numeric score to a position. Positive scores favor White, negative scores favor Black. The simplest evaluation just counts material (queen=9, rook=5, bishop=3.3, knight=3.2, pawn=1), but stronger engines also consider piece placement, pawn structure, and king safety.
+3. **Evaluation**: assign a numeric score to a position. Positive scores favor White, negative scores favor Black. The simplest evaluation just counts material (queen=9, rook=5, bishop=3.3, knight=3.2, pawn=1), but stronger engines also consider piece placement, pawn structure, and king safety.
 
-4. **Search** — use the evaluation function to look ahead several moves and pick the best one. The minimax algorithm says: assume your opponent will pick the move that minimizes your score, so you should pick the move that maximizes your minimum future score. Alpha-beta pruning dramatically reduces the tree by skipping branches that can't affect the final result.
+4. **Search**: use the evaluation function to look ahead several moves and pick the best one. The minimax algorithm says: assume your opponent will pick the move that minimizes your score, so you should pick the move that maximizes your minimum future score. Alpha-beta pruning dramatically reduces the tree by skipping branches that can't affect the final result.
 
 Our engine implements all four components, plus several enhancements that make the search stronger and faster.
 
@@ -66,7 +66,7 @@ export function pieceType(p: number): number { return p & TYPE_MASK; }
 export function pieceColor(p: number): number { return p & COLOR_MASK; }
 ```
 
-The `Board` class also maintains two `Set<number>` collections — one per side — that track which squares each player's pieces occupy. This avoids scanning the full 64-element array during move generation.
+The `Board` class also maintains two `Set<number>` collections, one per side, that track which squares each player's pieces occupy. This avoids scanning the full 64-element array during move generation.
 
 ### Precomputed Move Tables
 
@@ -80,7 +80,7 @@ export const BISHOP_RAYS: number[][][] = new Array(64);
 export const QUEEN_RAYS: number[][][] = new Array(64);
 ```
 
-For each square, `KNIGHT_MOVES[sq]` contains up to 8 target squares — the L-shaped jumps a knight can make. `KING_MOVES[sq]` contains up to 8 neighboring squares. For sliding pieces, the ray tables are more structured: `ROOK_RAYS[sq]` contains 4 rays (north, south, east, west), each an array of squares from the starting square to the board edge. `BISHOP_RAYS[sq]` does the same for the four diagonals, and `QUEEN_RAYS[sq]` combines both.
+For each square, `KNIGHT_MOVES[sq]` contains up to 8 target squares, the L-shaped jumps a knight can make. `KING_MOVES[sq]` contains up to 8 neighboring squares. For sliding pieces, the ray tables are more structured: `ROOK_RAYS[sq]` contains 4 rays (north, south, east, west), each an array of squares from the starting square to the board edge. `BISHOP_RAYS[sq]` does the same for the four diagonals, and `QUEEN_RAYS[sq]` combines both.
 
 These tables are computed once and reused for the entire run:
 
@@ -114,7 +114,7 @@ These tables are computed once and reused for the entire run:
 })();
 ```
 
-Precomputation makes both move generation and attack detection fast. To check if a square is attacked by a rook, we walk each rook ray outward from the square — the first piece we encounter in each direction tells us if an enemy rook or queen is targeting it.
+Precomputation makes both move generation and attack detection fast. To check if a square is attacked by a rook, we walk each rook ray outward from the square, the first piece we encounter in each direction tells us if an enemy rook or queen is targeting it.
 
 ### The Move Class
 
@@ -141,7 +141,7 @@ export class Move {
 }
 ```
 
-The `uci()` method returns the move in UCI format (e.g., `e2e4`, `e7e8q` for promotion), which is the standard protocol for chess engines. The extra fields — `isEnPassant`, `isCastling`, `isDoublePush` — are needed for correct board updates during `makeMove` and `unmakeMove`.
+The `uci()` method returns the move in UCI format (e.g., `e2e4`, `e7e8q` for promotion), which is the standard protocol for chess engines. The extra fields, `isEnPassant`, `isCastling`, `isDoublePush`, are needed for correct board updates during `makeMove` and `unmakeMove`.
 
 ### Zobrist Hashing
 
@@ -169,7 +169,7 @@ export const ZOBRIST_CASTLING: bigint[] = new Array(16);
 export const ZOBRIST_EP: bigint[] = new Array(64);
 ```
 
-The critical optimization is that Zobrist hashes are updated **incrementally** during `makeMove` rather than recomputed from scratch. When a piece moves from square A to square B, we XOR out the key for the piece at A and XOR in the key for the piece at B. The same pattern applies to castling rights, en passant, and side to move. This makes hash updates O(1) instead of O(64) — essential because the search tree calls `makeMove` millions of times.
+The critical optimization is that Zobrist hashes are updated **incrementally** during `makeMove` rather than recomputed from scratch. When a piece moves from square A to square B, we XOR out the key for the piece at A and XOR in the key for the piece at B. The same pattern applies to castling rights, en passant, and side to move. This makes hash updates O(1) instead of O(64), essential because the search tree calls `makeMove` millions of times.
 
 ### Making and Unmaking Moves
 
@@ -184,7 +184,7 @@ export interface BoardState {
 }
 ```
 
-Rather than deep-copying the entire board (which would be prohibitively slow during search), `makeMove` captures these four volatile fields before mutating the board. `unmakeMove` restores them and reverses the board mutations — all in constant time:
+Rather than deep-copying the entire board (which would be prohibitively slow during search), `makeMove` captures these four volatile fields before mutating the board. `unmakeMove` restores them and reverses the board mutations, all in constant time:
 
 ```typescript
 makeMove(move: Move): BoardState {
@@ -281,7 +281,7 @@ getPseudoLegalMoves(): Move[] {
 }
 ```
 
-Pawns are the most complex piece: they move forward (but not diagonally unless capturing), can double-push from the starting rank, promote on the back rank, and capture en passant. Knights and kings use the precomputed move tables directly. Sliding pieces (bishop, rook, queen) walk along their ray tables until they hit a piece — capturing an enemy or stopping before a friendly one.
+Pawns are the most complex piece: they move forward (but not diagonally unless capturing), can double-push from the starting rank, promote on the back rank, and capture en passant. Knights and kings use the precomputed move tables directly. Sliding pieces (bishop, rook, queen) walk along their ray tables until they hit a piece, capturing an enemy or stopping before a friendly one.
 
 Then `getLegalMoves` filters pseudo-legal moves by making each one on the board and checking whether the moving side's king is left in check:
 
@@ -368,7 +368,7 @@ function search(board: Board, depth: number, alpha: number, beta: number): numbe
 }
 ```
 
-The key insight of alpha-beta pruning is in the last two lines: once we find a move that's "too good" for our opponent to allow (i.e., the score exceeds `beta`), we stop searching the remaining moves. Our opponent, playing optimally, would never let us reach this position, so further analysis is wasted effort. With proper move ordering, alpha-beta reduces the effective branching factor from 35 to roughly 6 — the difference between searching depth 4 and depth 8 in the same time.
+The key insight of alpha-beta pruning is in the last two lines: once we find a move that's "too good" for our opponent to allow (i.e., the score exceeds `beta`), we stop searching the remaining moves. Our opponent, playing optimally, would never let us reach this position, so further analysis is wasted effort. With proper move ordering, alpha-beta reduces the effective branching factor from 35 to roughly 6, the difference between searching depth 4 and depth 8 in the same time.
 
 The initial window is `(-Infinity, +Infinity)`, meaning the first move establishes a baseline and subsequent moves tighten the bounds.
 
@@ -399,7 +399,7 @@ function quiescenceSearch(board: Board, alpha: number, beta: number): number {
 }
 ```
 
-This resolves the **horizon effect** — the classic problem where a search stops right before a recapture, making a position look better than it actually is. By extending on captures, quiescence search ensures the static evaluation is applied only to "quiet" positions where no immediate tactical exchanges remain.
+This resolves the **horizon effect**, the classic problem where a search stops right before a recapture, making a position look better than it actually is. By extending on captures, quiescence search ensures the static evaluation is applied only to "quiet" positions where no immediate tactical exchanges remain.
 
 ### Transposition Table
 
@@ -418,8 +418,8 @@ const transpositionTable = new Map<bigint, TTEntry>();
 
 On lookup, if the cached entry was computed at sufficient depth:
 - An exact score can be returned immediately, avoiding the subtree entirely.
-- An upper bound (`TT_ALPHA`) means the true score is at most this value — if it's already below alpha, we can skip the search.
-- A lower bound (`TT_BETA`) means the true score is at least this value — if it's already above beta, we get an immediate cutoff.
+- An upper bound (`TT_ALPHA`) means the true score is at most this value: if it's already below alpha, we can skip the search.
+- A lower bound (`TT_BETA`) means the true score is at least this value: if it's already above beta, we get an immediate cutoff.
 
 Checkmate scores are adjusted for distance from the root when storing and retrieving, so the engine prefers faster checkmates over slower ones:
 
@@ -463,7 +463,7 @@ export function getBestMove(board: Board, depth: number = 3): [Move, number] {
 }
 ```
 
-Iterative deepening might seem wasteful — searching depth 1, then 2, then 3 — but it's actually faster than searching depth 3 directly. The shallower searches populate the transposition table with best moves, which then get ordered first in the deeper search. Since alpha-beta pruning is maximally effective when good moves are tried first, this ordering produces dramatically more cutoffs and reduces the overall node count.
+Iterative deepening might seem wasteful, searching depth 1, then 2, then 3, but it's actually faster than searching depth 3 directly. The shallower searches populate the transposition table with best moves, which then get ordered first in the deeper search. Since alpha-beta pruning is maximally effective when good moves are tried first, this ordering produces dramatically more cutoffs and reduces the overall node count.
 
 ### Move Ordering
 
@@ -485,19 +485,19 @@ function moveValue(board: Board, move: Move, ttMove: Move | null): number {
 ```
 
 The priority scheme:
-1. **TT move** (1,000,000) — the best move from the previous iteration, tried first.
-2. **MVV-LVA captures** (10,000+) — Most Valuable Victim minus Least Valuable Attacker. Capturing a queen with a pawn gets a higher bonus than capturing a pawn with a queen.
-3. **Promotions** (8,000 + piece value) — promoting to a queen is better than underpromotion.
-4. **Castling** (1,000) — a positional bonus.
-5. **Positional delta** — the difference in piece-square table value between the destination and origin squares. This encourages pieces to move toward better squares.
+1. **TT move** (1,000,000): the best move from the previous iteration, tried first.
+2. **MVV-LVA captures** (10,000+): Most Valuable Victim minus Least Valuable Attacker. Capturing a queen with a pawn gets a higher bonus than capturing a pawn with a queen.
+3. **Promotions** (8,000 + piece value): promoting to a queen is better than underpromotion.
+4. **Castling** (1,000): a positional bonus.
+5. **Positional delta**: the difference in piece-square table value between the destination and origin squares. This encourages pieces to move toward better squares.
 
 ### The CLI Interface
 
 The interactive terminal UI in `cli.ts` provides three game modes:
 
-- **Play as White** — human moves first, program responds as Black.
-- **Play as Black** — program plays White, human controls Black.
-- **Program vs Program** — watch the AI play itself with a half-second pause between moves.
+- **Play as White**: human moves first, program responds as Black.
+- **Play as Black**: program plays White, human controls Black.
+- **Program vs Program**: watch the AI play itself with a half-second pause between moves.
 
 The board is rendered with Unicode chess glyphs on a checkered background using ANSI color codes. A sidebar shows the current turn, move number, 50-move clock, check indicator, en passant square, castling rights, and centipawn evaluation.
 
@@ -600,14 +600,14 @@ Depth 3: 8902 nodes (expected 8902) [PASS] 0.03s (296,733 nps)
 
 ## Wrap Up
 
-We built a complete chess engine with an AI opponent — board representation, legal move generation, Zobrist hashing, incremental undo, position evaluation with piece-square tables, and a negamax search with alpha-beta pruning, transposition tables, iterative deepening, and quiescence search. The entire engine runs in Node.js with zero dependencies.
+We built a complete chess engine with an AI opponent, board representation, legal move generation, Zobrist hashing, incremental undo, position evaluation with piece-square tables, and a negamax search with alpha-beta pruning, transposition tables, iterative deepening, and quiescence search. The entire engine runs in Node.js with zero dependencies.
 
 The design principles at work here apply far beyond chess:
 
 1. **Precompute what you can.** Move tables and Zobrist keys are computed once at load time and reused millions of times.
 2. **Make the hot path fast.** Incremental make/unmake and Zobrist updates avoid O(N) operations in the search loop.
-3. **Prune aggressively but correctly.** Alpha-beta pruning is mathematically sound — it never changes the result of a full minimax search, yet it reduces the tree size exponentially.
+3. **Prune aggressively but correctly.** Alpha-beta pruning is mathematically sound: it never changes the result of a full minimax search, yet it reduces the tree size exponentially.
 4. **Order matters.** Iterative deepening and MVV-LVA capture ordering produce drastically more cutoffs, making the same search depth reachable in a fraction of the nodes.
 5. **Cache results.** The transposition table eliminates redundant work when the same position is reached through different move sequences.
 
-There are many ways to extend this engine — null move pruning, killer move heuristics, principal variation search, UCI protocol support for GUI integration, and an opening book are all natural next steps. But the core search architecture described here is the same one used by high-performance engines: the difference is in the details, not the design.
+There are many ways to extend this engine, null move pruning, killer move heuristics, principal variation search, UCI protocol support for GUI integration, and an opening book are all natural next steps. But the core search architecture described here is the same one used by high-performance engines: the difference is in the details, not the design.

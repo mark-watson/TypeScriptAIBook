@@ -20,9 +20,9 @@ Relational databases, on the other hand, use a tabular data model to represent k
 
 ## Querying Wikidata with SPARQL and TypeScript
 
-[Wikidata](https://www.wikidata.org/) is a free, open knowledge base maintained by the Wikimedia Foundation. It contains structured data about millions of entities — people, places, organizations, scientific concepts, and more — all accessible through a public SPARQL endpoint.
+[Wikidata](https://www.wikidata.org/) is a free, open knowledge base maintained by the Wikimedia Foundation. It contains structured data about millions of entities, people, places, organizations, scientific concepts, and more, all accessible through a public SPARQL endpoint.
 
-In TypeScript, we use the built-in `fetch` API to query SPARQL endpoints directly — no additional libraries needed:
+In TypeScript, we use the built-in `fetch` API to query SPARQL endpoints directly, no additional libraries needed:
 
 ### Finding Information About a Person
 
@@ -59,7 +59,7 @@ for (const r of results.results.bindings) {
 }
 ```
 
-The output shows Wikidata returning multiple results — one per occupation — for the same person:
+The output shows Wikidata returning multiple results, one per occupation, for the same person:
 
 ```
 $ tsx wikidata_person.ts
@@ -124,7 +124,7 @@ try {
 }
 ```
 
-Notice that TypeScript's built-in `fetch` is all we need to query any SPARQL endpoint — no special library required. The SPARQL results come back as JSON which TypeScript handles natively.
+Notice that TypeScript's built-in `fetch` is all we need to query any SPARQL endpoint, no special library required. The SPARQL results come back as JSON which TypeScript handles natively.
 
 
 ## The SQLite Relational Database for Knowledge Representation
@@ -196,7 +196,7 @@ function queryKnowledgeBase(db: Database.Database) {
     SELECT s.name, d.name AS discovery, d.year, d.description FROM scientists s
     JOIN scientist_discovery sd ON s.id = sd.scientist_id
     JOIN discoveries d ON sd.discovery_id = d.id ORDER BY d.year
-  `).all() as any[]) console.log(`  ${r.name}: ${r.discovery} (${r.year}) — ${r.description}`);
+  `).all() as any[]) console.log(`  ${r.name}: ${r.discovery} (${r.year}), ${r.description}`);
 
   console.log("\nScientists who share a field:");
   for (const r of db.prepare(`
@@ -221,9 +221,9 @@ Scientists in Quantum Mechanics:
   Richard Feynman (American)
 
 Discoveries by scientist:
-  Marie Curie: Radioactivity (1898) — Discovery of radium and polonium
-  Albert Einstein: Special Relativity (1905) — Time and space are relative
-  Richard Feynman: Quantum Electrodynamics (1948) — Quantum theory of light and matter
+  Marie Curie: Radioactivity (1898), Discovery of radium and polonium
+  Albert Einstein: Special Relativity (1905), Time and space are relative
+  Richard Feynman: Quantum Electrodynamics (1948), Quantum theory of light and matter
 
 Scientists who share a field:
   Albert Einstein & Marie Curie: Physics

@@ -1,6 +1,6 @@
 # An AI Command-Line Tool with Search Grounding and Persistent Cache
 
-In this chapter we build an interactive command-line tool that combines Google's Gemini API with optional search grounding and a persistent cache. The result is a practical daily-driver REPL: you can ask Gemini questions, ground answers in live web search results, and selectively cache useful responses so they become context for future queries. The project uses only the **@google/genai** SDK and Node.js built-in modules — no native dependencies are required.
+In this chapter we build an interactive command-line tool that combines Google's Gemini API with optional search grounding and a persistent cache. The result is a practical daily-driver REPL: you can ask Gemini questions, ground answers in live web search results, and selectively cache useful responses so they become context for future queries. The project uses only the **@google/genai** SDK and Node.js built-in modules, no native dependencies are required.
 
 The examples for this chapter are in the directory **source-code/ai-command-line-tool**.
 
@@ -8,10 +8,10 @@ The examples for this chapter are in the directory **source-code/ai-command-line
 
 The AI REPL implements a simple but effective workflow:
 
-1. **Ask a question** — Type a natural language query and Gemini responds using its training data plus any relevant cached context.
-2. **Ask with search** — Prefix your query with `!` to enable Google Search grounding, useful for current events or factual lookups.
-3. **Cache useful answers** — Type `>` to save the last answer to a persistent JSON cache file. When you ask a new question, the tool extracts keywords from your query and retrieves only cached entries that share keyword overlap — so only relevant context is included.
-4. **Manage the cache** — Type `!` alone to clear cache entries older than one week.
+1. **Ask a question**: Type a natural language query and Gemini responds using its training data plus any relevant cached context.
+2. **Ask with search**: Prefix your query with `!` to enable Google Search grounding, useful for current events or factual lookups.
+3. **Cache useful answers**: Type `>` to save the last answer to a persistent JSON cache file. When you ask a new question, the tool extracts keywords from your query and retrieves only cached entries that share keyword overlap, so only relevant context is included.
+4. **Manage the cache**: Type `!` alone to clear cache entries older than one week.
 
 This cache-as-context pattern is a lightweight alternative to retrieval-augmented generation (RAG). Instead of embedding documents into a vector store, you manually curate a set of useful facts. At query time, bag-of-words matching retrieves only the cached entries relevant to your current question, keeping context focused and avoiding noise.
 
@@ -37,7 +37,7 @@ ai-command-line-tool/
 Before we can do relevance-based cache lookups, we need a way to extract meaningful keywords from the user's query. The `extractKeywords` function splits text into words, strips punctuation and stop words, and returns an array of content-bearing terms:
 
 ```typescript
-// keywords.ts — Keyword extraction with stop-word filtering
+// keywords.ts, Keyword extraction with stop-word filtering
 
 const STOP = new Set([
   "a","an","the","is","are","was","were","be","been","being",
@@ -58,14 +58,14 @@ export const extractKeywords = (text: string): string[] =>
 
 For example, the query `"What sci-fi movies are playing today in Flagstaff AZ?"` produces the keyword array `["sci-fi", "movies", "playing", "today", "flagstaff"]`. Words shorter than three characters, punctuation, and common stop words are all filtered out.
 
-The `Set` data structure gives O(1) lookup time for stop words — a small detail that matters when you call this function on every query.
+The `Set` data structure gives O(1) lookup time for stop words, a small detail that matters when you call this function on every query.
 
 ## The Cache Engine
 
 The cache engine stores text entries as a JSON file in the user's home directory. Each entry carries a timestamp so old entries can be expired:
 
 ```typescript
-// cache_engine.ts — JSON-file-backed persistent cache with keyword lookup
+// cache_engine.ts, JSON-file-backed persistent cache with keyword lookup
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
@@ -103,9 +103,9 @@ export class CacheEngine {
 }
 ```
 
-The `lookup` method implements bag-of-words matching: a cached entry is included if its text contains *any* of the query keywords. This OR-matching approach ensures that if you cached a movie-related answer last week and now ask about movies again, that context surfaces. But if you ask about something unrelated — say, a recipe — the movie answer stays out of the prompt.
+The `lookup` method implements bag-of-words matching: a cached entry is included if its text contains *any* of the query keywords. This OR-matching approach ensures that if you cached a movie-related answer last week and now ask about movies again, that context surfaces. But if you ask about something unrelated, say, a recipe, the movie answer stays out of the prompt.
 
-Using a JSON file rather than SQLite keeps the project dependency-free and makes the cache trivially inspectable — you can open `~/.ai-repl-cache.json` in any text editor to review or edit your cached entries.
+Using a JSON file rather than SQLite keeps the project dependency-free and makes the cache trivially inspectable, you can open `~/.ai-repl-cache.json` in any text editor to review or edit your cached entries.
 
 ## The Main REPL Application
 
@@ -128,7 +128,7 @@ const CACHE_DB_PATH = join(homedir(), ".ai-repl-cache.db");
 
 The model is set to `gemini-2.5-flash` for fast, capable responses suitable for interactive use. The cache file lives in the user's home directory so it persists across sessions and working directories.
 
-Note the `.js` extension in the import paths — this is required for ES module resolution in TypeScript. The `tsx` runner resolves `.js` imports to their `.ts` source files automatically.
+Note the `.js` extension in the import paths, this is required for ES module resolution in TypeScript. The `tsx` runner resolves `.js` imports to their `.ts` source files automatically.
 
 ### API Key Validation
 
@@ -189,7 +189,7 @@ async function askGemini(prompt: string, search: boolean): Promise<string> {
 }
 ```
 
-The `try/catch` wrapping is important for a daily-use tool — network errors, rate limits, and API issues should produce a readable message rather than crashing the REPL.
+The `try/catch` wrapping is important for a daily-use tool, network errors, rate limits, and API issues should produce a readable message rather than crashing the REPL.
 
 The `tools: [{ googleSearch: {} }]` config enables Google Search grounding through the Gemini API. When active, Gemini searches the web for current information before generating its response, making it useful for questions about current events or facts that may have changed since the model's training cutoff.
 
@@ -244,7 +244,7 @@ replLoop();
 
 The command dispatch is worth studying. The `!` character serves double duty: alone it clears old cache entries, but followed by text it triggers a search-grounded query. The `if (trimmed === "!")` check before `if (trimmed.startsWith("!"))` ensures the two cases are handled separately.
 
-The `try/finally` block mirrors the Common Lisp `unwind-protect` pattern — the cache file is flushed to disk even if the user exits with Ctrl-D or an unhandled error occurs.
+The `try/finally` block mirrors the Common Lisp `unwind-protect` pattern, the cache file is flushed to disk even if the user exits with Ctrl-D or an unhandled error occurs.
 
 Using `readline/promises` with `await` gives us a clean loop structure without the callback nesting that the traditional `readline` API would require. The `try/catch` around `rl.question` handles EOF (Ctrl-D) gracefully.
 
@@ -262,7 +262,7 @@ npx tsx ai_repl.ts
 
 ## Example Session
 
-The following session demonstrates the search-then-cache workflow. First we ask a question with Google Search grounding (prefix `!`), then cache the answer, then ask the same question without search — Gemini can now answer from the cached context:
+The following session demonstrates the search-then-cache workflow. First we ask a question with Google Search grounding (prefix `!`), then cache the answer, then ask the same question without search, Gemini can now answer from the cached context:
 
 ```text
 $ npx tsx ai_repl.ts
@@ -305,7 +305,7 @@ playing at the **Harkins Flagstaff 16**.
 Please check the Harkins Theatres website to confirm specific showtimes.
 ```
 
-Notice that the second query (without the `!` prefix) produces the same accurate, current answer — even though it did not use Google Search. The keywords `"sci-fi"`, `"movies"`, `"flagstaff"` matched the cached answer, so it was automatically included as context for Gemini.
+Notice that the second query (without the `!` prefix) produces the same accurate, current answer, even though it did not use Google Search. The keywords `"sci-fi"`, `"movies"`, `"flagstaff"` matched the cached answer, so it was automatically included as context for Gemini.
 
 ## REPL Command Reference
 
@@ -321,10 +321,10 @@ Notice that the second query (without the `!` prefix) produces the same accurate
 
 ## Key Takeaways
 
-1. **Cache as context with relevance filtering** — Selectively caching LLM responses and using bag-of-words keyword matching to retrieve only relevant entries keeps prompts focused. This is a lightweight alternative to vector-based RAG that works well for a personal tool.
-2. **Search grounding** — The `tools: [{ googleSearch: {} }]` config leverages Google Search through the Gemini API, making the tool useful for current events and factual queries that exceed the model's training cutoff.
-3. **Node.js readline/promises** — The promise-based readline API provides line editing, history, and Ctrl-D handling out of the box, making the REPL feel like a native shell tool without any third-party dependencies.
-4. **try/finally for cleanup** — Wrapping the REPL loop ensures the cache file is flushed to disk, even on unexpected exits. This is the TypeScript equivalent of Common Lisp's `unwind-protect`.
-5. **Composing modules** — This tool demonstrates how small, focused TypeScript modules (Gemini client, cache engine, keyword extractor) compose cleanly into a practical application. Each module is independently testable and reusable.
+1. **Cache as context with relevance filtering**: Selectively caching LLM responses and using bag-of-words keyword matching to retrieve only relevant entries keeps prompts focused. This is a lightweight alternative to vector-based RAG that works well for a personal tool.
+2. **Search grounding**: The `tools: [{ googleSearch: {} }]` config leverages Google Search through the Gemini API, making the tool useful for current events and factual queries that exceed the model's training cutoff.
+3. **Node.js readline/promises**: The promise-based readline API provides line editing, history, and Ctrl-D handling out of the box, making the REPL feel like a native shell tool without any third-party dependencies.
+4. **try/finally for cleanup**: Wrapping the REPL loop ensures the cache file is flushed to disk, even on unexpected exits. This is the TypeScript equivalent of Common Lisp's `unwind-protect`.
+5. **Composing modules**: This tool demonstrates how small, focused TypeScript modules (Gemini client, cache engine, keyword extractor) compose cleanly into a practical application. Each module is independently testable and reusable.
 
 

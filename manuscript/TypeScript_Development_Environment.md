@@ -8,7 +8,7 @@ Here are a few things to consider when setting up your TypeScript development en
 - Use **npm** or **pnpm** for managing packages. I use npm in this book since it comes bundled with Node.js.
 - Use **npx tsx** to run TypeScript files directly without a separate compile step. This is the fastest way to iterate on command-line scripts.
 - Use Git or another version control system to manage your codebase. I will not cover Git here so [read a good tutorial](https://git-scm.com/docs/gittutorial) if you have not used it before.
-- Use an IDE like VS Code (which has excellent built-in TypeScript support), WebStorm, or a text editor like Emacs or Vim — whatever you are comfortable with. I almost exclusively use Emacs, but I have an excuse: I am an old man! I have used Emacs for 45 years and old habits die hard.
+- Use an IDE like VS Code (which has excellent built-in TypeScript support), WebStorm, or a text editor like Emacs or Vim: whatever you are comfortable with. I almost exclusively use Emacs, but I have an excuse: I am an old man! I have used Emacs for 45 years and old habits die hard.
 - Add comments and documentation to your code. Your "future you" will thank you, as will your human colleagues and agentic coding assistants working with your code.
 
 ## Installing Node.js
@@ -94,7 +94,7 @@ npx tsx@4.0.0 script.ts
 
 - Running tsx directly relies on the shell finding the executable in its PATH or npm script mapping.
 - Speed (Lower Latency): npx introduces a non-trivial startup overhead because it checks for updates and resolves the binary location. Calling tsx directly is instantaneous.
-- Version Consistency & Determinism: By relying on a local installation (npm i -D tsx), you ensure that every developer on the team—and the production build environment—runs the exact same version locked in package-lock.json. npx without a version specifier can introduce breaking changes if a new major version of tsx is released.
+- Version Consistency & Determinism: By relying on a local installation (npm i -D tsx), you ensure that every developer on the team, and the production build environment, runs the exact same version locked in package-lock.json. npx without a version specifier can introduce breaking changes if a new major version of tsx is released.
 - Seamless npm Script Integration: Inside package.json scripts, npm automatically augments the PATH to include node_modules/.bin. Therefore, using npx inside an npm script is redundant and adds unnecessary overhead:
 
 
@@ -154,10 +154,10 @@ The `tsconfig.json` file configures the TypeScript compiler. Here is the configu
 
 Key settings:
 
-- **target: "ES2022"** — use modern JavaScript features like top-level await and private class fields.
-- **module: "NodeNext"** — use Node.js's native ES module resolution.
-- **strict: true** — enable all strict type checking options. This catches more bugs at compile time.
-- **esModuleInterop: true** — allows importing CommonJS modules with default imports.
+- **target: "ES2022"**: use modern JavaScript features like top-level await and private class fields.
+- **module: "NodeNext"**: use Node.js's native ES module resolution.
+- **strict: true**: enable all strict type checking options. This catches more bugs at compile time.
+- **esModuleInterop: true**: allows importing CommonJS modules with default imports.
 
 ### The package.json File
 

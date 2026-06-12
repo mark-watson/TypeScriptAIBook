@@ -1,10 +1,10 @@
 # Exploratory Data Analysis and Feature Engineering
 
-Before training any machine learning model, you need to understand your data. **Exploratory Data Analysis (EDA)** is the process of examining a dataset to summarize its main characteristics, find patterns, detect anomalies, and check assumptions. **Feature engineering** is the art of creating new input variables — or transforming existing ones — to improve model performance.
+Before training any machine learning model, you need to understand your data. **Exploratory Data Analysis (EDA)** is the process of examining a dataset to summarize its main characteristics, find patterns, detect anomalies, and check assumptions. **Feature engineering** is the art of creating new input variables, or transforming existing ones, to improve model performance.
 
 These steps often make the difference between a mediocre model and a good one. As the saying goes: "garbage in, garbage out."
 
-No external libraries are required for this chapter — we work with TypeScript arrays and our own utility functions.
+No external libraries are required for this chapter, we work with TypeScript arrays and our own utility functions.
 
 The examples for this chapter are in the directory **source-code/data_analysis_and_feature_engineering**.
 
@@ -93,7 +93,7 @@ headers.map((name, i) => ({ name, corr: i !== targetIdx ? correlation(data.map(r
   .forEach(({ name, corr }) => console.log(`  ${name.padEnd(22)} ${corr >= 0 ? "+" : ""}${corr.toFixed(4)}`));
 ```
 
-**MedInc** (median income) stands out with a correlation of +0.69 — by far the strongest predictor. This aligns with what we saw from the regression coefficients in the previous chapter.
+**MedInc** (median income) stands out with a correlation of +0.69, by far the strongest predictor. This aligns with what we saw from the regression coefficients in the previous chapter.
 
 ### Outlier Detection
 
@@ -118,7 +118,7 @@ headers.forEach((name, i) => {
 
 ## Feature Engineering
 
-Feature engineering is where domain knowledge meets data science. By creating new features that better represent the underlying patterns, we can significantly improve model performance — sometimes more than choosing a fancier algorithm.
+Feature engineering is where domain knowledge meets data science. By creating new features that better represent the underlying patterns, we can significantly improve model performance, sometimes more than choosing a fancier algorithm.
 
 ### Creating New Features
 
@@ -171,7 +171,7 @@ The ultimate test of feature engineering is whether it improves model performanc
   Engineered (11 features)        R² = 0.6622
 ```
 
-Our engineered features improved R² from 0.58 to 0.66 — a **15% improvement** in explained variance, using the exact same algorithm. This demonstrates why feature engineering is often more valuable than model selection for improving results.
+Our engineered features improved R² from 0.58 to 0.66, a **15% improvement** in explained variance, using the exact same algorithm. This demonstrates why feature engineering is often more valuable than model selection for improving results.
 
 
 ## EDA and Feature Engineering Wrap-up

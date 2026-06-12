@@ -16,12 +16,14 @@ Before diving into the code, let's understand the key idea behind our detector. 
 
 Every Gaussian distribution is characterized by two numbers:
 
-- **Mean (μ)**: the average value. This is the center of the bell curve.
-- **Variance (σ²)**: how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
+- **Mean ({$$}\mu{/$$})**: the average value. This is the center of the bell curve.
+- **Variance ({$$}\sigma^2{/$$})**: how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
 
 The **Gaussian probability density function (PDF)** tells us how likely a particular value is, given our distribution:
 
-    p(x) = (1 / (√(2π) · σ)) · exp(-(x - μ)² / (2σ²))
+{$$}
+p(x) = \frac{1}{\sqrt{2\pi}\sigma} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)
+{/$$}
 
 If we compute `p(x)` and get a high number, the value `x` fits well with our model of "normal." If `p(x)` is very low, then `x` is far from the average, it's an anomaly.
 
@@ -31,7 +33,7 @@ Our detector works in four steps:
 
 1. **Split the data** into three groups: training (~60%), cross-validation, and test. The training set is mostly normal examples. This mirrors how you would use the system in practice: train on data you believe to be normal, then test on new data.
 
-2. **Fit a Gaussian model** to the training data. For each feature (measurement), we compute the mean μ and variance σ². This tells us what "normal" looks like for each feature independently.
+2. **Fit a Gaussian model** to the training data. For each feature (measurement), we compute the mean {$$}\mu{/$$} and variance {$$}\sigma^2{/$$}. This tells us what "normal" looks like for each feature independently.
 
 3. **Tune the epsilon threshold.** For each data sample, we compute its average probability across all features. If this probability is below a threshold called **epsilon**, we classify it as an anomaly. But what value of epsilon works best? We try 200 different values and pick the one that makes the fewest mistakes on the cross-validation set. This is called **hyperparameter tuning**.
 
@@ -131,10 +133,10 @@ export function gaussianP(x: number[], mu: number[], sigmaSq: number[], nf: numb
 
 Let's trace through what happens for one feature:
 
-1. We retrieve the variance `s2` and compute the standard deviation `sigma = √s2`.
+1. We retrieve the variance `s2` and compute the standard deviation `sigma = Math.sqrt(s2)`.
 2. We compute `diff`: how far this sample's value is from the mean.
-3. The exponent is `-(diff²) / (2 · σ²)`. When `diff` is large (the value is far from the mean), this exponent becomes a large negative number, making `Math.exp(exponent)` very small.
-4. We multiply by the normalization constant `1 / (√(2π) · σ)` to get a proper probability density.
+3. The exponent is {$$}-\frac{\text{diff}^2}{2\sigma^2}{/$$}. When `diff` is large (the value is far from the mean), this exponent becomes a large negative number, making `Math.exp(exponent)` very small.
+4. We multiply by the normalization constant {$$}\frac{1}{\sqrt{2\pi}\sigma}{/$$} to get a proper probability density.
 5. We sum these per-feature probabilities and divide by the number of features to get an average.
 
 A normal sample will have values close to the mean across most features, producing a relatively high average probability. An anomalous sample will have unusual values in several features, producing a low average probability.

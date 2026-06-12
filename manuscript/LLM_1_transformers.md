@@ -25,9 +25,11 @@ The attention score between two tokens is computed as the dot product of the que
 
 The mathematical formulation is:
 
-    Attention(Q, K, V) = softmax(QK^T / √d_k) V
+{$$}
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right) V
+{/$$}
 
-where d_k is the dimension of the key vectors. The scaling factor √d_k prevents the dot products from growing too large, which would push the softmax into regions with very small gradients.
+where {$$}d_k{/$$} is the dimension of the key vectors. The scaling factor {$$}\sqrt{d_k}{/$$} prevents the dot products from growing too large, which would push the softmax into regions with very small gradients.
 
 ### Multi-Head Attention
 

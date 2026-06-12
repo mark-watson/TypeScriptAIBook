@@ -27,7 +27,7 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Likelihood**, The probability of observing the evidence *assuming a specific hypothesis is true*: P(Evidence | Hypothesis). The likelihood is not itself a probability distribution over hypotheses; it is a function that tells you how well each hypothesis explains the data you actually observed. In the medical example, the likelihood of a positive test result given disease is 0.99 (the sensitivity).
 
-**Marginal likelihood (evidence)**, The total probability of the observed evidence across all hypotheses: Σ P(Evidence | H) · P(H). It acts as the normalising constant in Bayes' Theorem, ensuring the posteriors sum to one.
+**Marginal likelihood (evidence)**, The total probability of the observed evidence across all hypotheses: {$$}\sum P(\text{Evidence} \mid H) P(H){/$$}. It acts as the normalising constant in Bayes' Theorem, ensuring the posteriors sum to one.
 
 **Bayes' Theorem**, The mathematical rule connecting prior, likelihood, and posterior: P(H | E) = P(E | H) · P(H) / P(E). It is the engine of Bayesian inference and the foundation of the `update` function in this library.
 
@@ -43,13 +43,13 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Positive predictive value (PPV)**, Among everyone who tested positive, the fraction who actually have the condition: TP / (TP + FP). The PPV depends heavily on prevalence; for rare conditions, PPV can be very low even when sensitivity and specificity are high.
 
-**Z-score (standard score)**, The number of standard deviations a data point lies from the mean: z = (x − μ) / σ. A z-score of 0 means the value equals the mean; ±1.96 corresponds to the outer 5 % of a standard normal distribution. Used in hypothesis testing to determine how extreme an observation is.
+**Z-score (standard score)**, The number of standard deviations a data point lies from the mean: {$$}z = \frac{x - \mu}{\sigma}{/$$}. A z-score of 0 means the value equals the mean; ±1.96 corresponds to the outer 5 % of a standard normal distribution. Used in hypothesis testing to determine how extreme an observation is.
 
 **P-value**, The probability of observing data *at least as extreme* as what was measured, *assuming the null hypothesis is true*. A small p-value (e.g. < 0.05) is conventionally taken as evidence against the null hypothesis. Crucially, the p-value is **not** the probability that the hypothesis is true or false, a subtlety that is routinely misunderstood. A p-value of 0.03 means "if nothing interesting were happening, we would see data this extreme only 3 % of the time."
 
 **Null hypothesis (H₀)**, The default assumption of "no effect" or "no difference" that a frequentist test tries to reject. For example, "the positive-test rate equals the disease prevalence."
 
-**Chi-squared test**, A test that compares observed counts against expected counts to determine whether the discrepancy is larger than chance alone would predict. Pearson's chi-squared statistic is Σ (O − E)² / E, summed over all categories. Used here to test whether test results and disease status are independent.
+**Chi-squared test**, A test that compares observed counts against expected counts to determine whether the discrepancy is larger than chance alone would predict. Pearson's chi-squared statistic is {$$}\sum \frac{(O - E)^2}{E}{/$$}, summed over all categories. Used here to test whether test results and disease status are independent.
 
 **Degrees of freedom (df)**, The number of independent values that are free to vary in a statistical calculation. For a chi-squared test on a table with k categories, df = k − 1.
 
@@ -61,7 +61,7 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Pearson correlation coefficient (r)**, A measure of the linear association between two variables, ranging from −1 (perfect negative) to +1 (perfect positive). A value near 0 means no linear relationship. It measures *association*, not causation.
 
-**Spearman rank correlation (ρ)**, A non-parametric measure of monotonic association. It works by ranking the data and then computing Pearson-r on the ranks. More robust to outliers and non-linear but monotonic relationships than Pearson-r.
+**Spearman rank correlation ({$$}\rho{/$$})**, A non-parametric measure of monotonic association. It works by ranking the data and then computing Pearson-r on the ranks. More robust to outliers and non-linear but monotonic relationships than Pearson-r.
 
 **Correlation matrix**, A table showing the pairwise Pearson-r values for every combination of variables in a dataset. Useful for a quick overview of which variables move together.
 
@@ -303,7 +303,7 @@ To give the frequentist perspective equal hands-on treatment, the library includ
 
 ### Frequentist module API (`frequentist.ts`)
 
-- `zScore(observed, expected, stdDev)`: compute the standard z-score: (observed − expected) / σ.
+- `zScore(observed, expected, stdDev)`: compute the standard z-score: (observed - expected) / {$$}\sigma{/$$}.
 - `zTestProportion(successes, n, hypothesisedP)`: one-sample z-test for a proportion. Returns `{ z, pValue }`. Tests whether the observed proportion differs significantly from `hypothesisedP`.
 - `chiSquaredTest(observed, expected)`: Pearson's chi-squared goodness-of-fit test. `observed` and `expected` are equal-length arrays of counts. Returns `{ chiSquared, df, pValue }`.
 - `confidenceIntervalProportion(successes, n, confidence?)`: Wilson score interval for a binomial proportion. Returns `{ lower, upper }`.

@@ -29,7 +29,7 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Marginal likelihood (evidence)**, The total probability of the observed evidence across all hypotheses: {$$}\sum P(\text{Evidence} \mid H) P(H){/$$}. It acts as the normalising constant in Bayes' Theorem, ensuring the posteriors sum to one.
 
-**Bayes' Theorem**, The mathematical rule connecting prior, likelihood, and posterior: P(H | E) = P(E | H) · P(H) / P(E). It is the engine of Bayesian inference and the foundation of the `update` function in this library.
+**Bayes' Theorem**, The mathematical rule connecting prior, likelihood, and posterior: {$$}P(H \mid E) = \frac{P(E \mid H) P(H)}{P(E)}{/$$}. It is the engine of Bayesian inference and the foundation of the `update` function in this library.
 
 **Maximum a posteriori (MAP)**, The hypothesis with the highest posterior probability. It is the Bayesian analogue of a "best guess" and is returned by the `maximumAPosteriori` function.
 
@@ -37,9 +37,9 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Sensitivity (true-positive rate)**, The probability that a test correctly identifies a positive case: P(Test+ | Condition+). A sensitivity of 99 % means the test catches 99 out of every 100 truly positive cases.
 
-**Specificity (true-negative rate)**, The probability that a test correctly identifies a negative case: P(Test− | Condition−). Specificity = 1 − false-positive rate.
+**Specificity (true-negative rate)**, The probability that a test correctly identifies a negative case: P(Test- | Condition-). Specificity = 1 - false-positive rate.
 
-**False-positive rate**, The probability that a test incorrectly flags a healthy individual as positive: P(Test+ | Condition−). In our medical example this is 5 %.
+**False-positive rate**, The probability that a test incorrectly flags a healthy individual as positive: P(Test+ | Condition-). In our medical example this is 5 %.
 
 **Positive predictive value (PPV)**, Among everyone who tested positive, the fraction who actually have the condition: TP / (TP + FP). The PPV depends heavily on prevalence; for rare conditions, PPV can be very low even when sensitivity and specificity are high.
 
@@ -59,7 +59,7 @@ Before diving into the library and the worked examples, here is a reference for 
 
 **Credible interval (Bayesian)**, The Bayesian counterpart of a confidence interval. A 95 % credible interval means there is a 95 % probability that the parameter lies within this range, given the observed data and priors. This is what most people intuitively think a confidence interval means.
 
-**Pearson correlation coefficient (r)**, A measure of the linear association between two variables, ranging from −1 (perfect negative) to +1 (perfect positive). A value near 0 means no linear relationship. It measures *association*, not causation.
+**Pearson correlation coefficient (r)**, A measure of the linear association between two variables, ranging from -1 (perfect negative) to +1 (perfect positive). A value near 0 means no linear relationship. It measures *association*, not causation.
 
 **Spearman rank correlation ({$$}\rho{/$$})**, A non-parametric measure of monotonic association. It works by ranking the data and then computing Pearson-r on the ranks. More robust to outliers and non-linear but monotonic relationships than Pearson-r.
 
@@ -308,7 +308,7 @@ To give the frequentist perspective equal hands-on treatment, the library includ
 - `chiSquaredTest(observed, expected)`: Pearson's chi-squared goodness-of-fit test. `observed` and `expected` are equal-length arrays of counts. Returns `{ chiSquared, df, pValue }`.
 - `confidenceIntervalProportion(successes, n, confidence?)`: Wilson score interval for a binomial proportion. Returns `{ lower, upper }`.
 
-The p-value computation uses a rational approximation to the standard normal CDF (Abramowitz & Stegun 26.2.17), accurate to ~1.5 × 10⁻⁷, more than sufficient for exploratory work.
+The p-value computation uses a rational approximation to the standard normal CDF (Abramowitz & Stegun 26.2.17), accurate to {$$}\approx 1.5 \times 10^{-7}{/$$}, more than sufficient for exploratory work.
 
 ### Walking Through the Frequentist Code
 
@@ -351,7 +351,7 @@ export function confidenceIntervalProportion(successes: number, n: number, confi
 Revisits the same medical-screening scenario from a purely frequentist standpoint:
 
 1. **Simulates a clinical trial**: 100,000 individuals screened; counts true positives, false positives, true negatives, false negatives.
-2. **Chi-squared test of independence**: tests whether the test result and disease status are statistically independent. With N = 100,000 and 5 % false-positive rate, the test overwhelmingly rejects independence (p ≈ 0), but this tells you nothing about the *magnitude* of risk for an individual patient.
+2. **Chi-squared test of independence**: tests whether the test result and disease status are statistically independent. With N = 100,000 and 5 % false-positive rate, the test overwhelmingly rejects independence ({$$}p \approx 0{/$$}), but this tells you nothing about the *magnitude* of risk for an individual patient.
 3. **Confidence interval for positive predictive value (PPV)**: among everyone who tested positive, what fraction actually has the disease? The 95 % Wilson interval is computed, showing the PPV is dismally low (~1–3 %) despite "statistical significance."
 4. **Side-by-side comparison**: prints the Bayesian posterior alongside the frequentist CI, demonstrating that the two frameworks reach the same conclusion via different reasoning.
 

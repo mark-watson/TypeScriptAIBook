@@ -336,7 +336,7 @@ The engine automatically detects the endgame transition: when total non-pawn, no
 
 ### Search: Negamax with Alpha-Beta Pruning
 
-The core of the AI is the negamax search algorithm. Negamax is a symmetric formulation of minimax that exploits the zero-sum property of chess: a position that is +300 for White is −300 for Black. Instead of alternating between maximizing and minimizing, negamax always maximizes from the current player's perspective and negates the score each time the turn switches:
+The core of the AI is the negamax search algorithm. Negamax is a symmetric formulation of minimax that exploits the zero-sum property of chess: a position that is +300 for White is -300 for Black. Instead of alternating between maximizing and minimizing, negamax always maximizes from the current player's perspective and negates the score each time the turn switches:
 
 ```typescript
 function search(board: Board, depth: number, alpha: number, beta: number): number {

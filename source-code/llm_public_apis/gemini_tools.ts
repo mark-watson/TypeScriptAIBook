@@ -35,19 +35,45 @@ const prompt = `Use the available tools to:
 2. Read the package.json file.
 Then summarize what you find.`;
 
-const response = await ai.models.generateContent({
+const contents: any[] = [
+  { role: "user", parts: [{ text: prompt }] },
+];
+
+let response = await ai.models.generateContent({
   model: "gemini-2.5-flash",
-  contents: prompt,
+  contents,
   config: { tools },
 });
 
-let text = "";
-for (const part of response.candidates?.[0]?.content?.parts ?? []) {
-  if (part.text) {
-    console.log(part.text);
-    text += part.text;
-  } else if (part.functionCall) {
-    const { name, args } = part.functionCall;
+while (true) {
+  const candidate = response.candidates?.[0];
+  const modelContent = candidate?.content;
+  if (!modelContent) {
+    break;
+  }
+
+  const functionCalls = modelContent.parts?.filter(p => p.functionCall) ?? [];
+  if (functionCalls.length === 0) {
+    if (response.text) {
+      console.log(response.text);
+    }
+    break;
+  }
+
+  const textParts = modelContent.parts?.filter(p => p.text) ?? [];
+  for (const part of textParts) {
+    if (part.text) {
+      console.log(part.text);
+    }
+  }
+
+  // 1. Add model response (with the function calls) to the conversation history
+  contents.push(modelContent);
+
+  // 2. Execute all function calls and gather their responses
+  const responseParts = [];
+  for (const part of functionCalls) {
+    const { name, args } = part.functionCall!;
     console.log(`\n[Tool call: ${name}(${JSON.stringify(args)})]\n`);
 
     let result: string;
@@ -60,20 +86,24 @@ for (const part of response.candidates?.[0]?.content?.parts ?? []) {
       result = "Unknown function";
     }
 
-    const followUp = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        { role: "user", parts: [{ text: prompt }] },
-        {
-          role: "model",
-          parts: [{ functionCall: { name, args } }],
-        },
-        {
-          role: "user",
-          parts: [{ functionResponse: { name, response: { result } } }],
-        },
-      ],
+    responseParts.push({
+      functionResponse: {
+        name,
+        response: { result },
+      },
     });
-    console.log(followUp.text);
   }
+
+  // 3. Add user response (with the function results) to the conversation history
+  contents.push({
+    role: "user",
+    parts: responseParts,
+  });
+
+  // 4. Send the updated contents back to the model
+  response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents,
+    config: { tools },
+  });
 }

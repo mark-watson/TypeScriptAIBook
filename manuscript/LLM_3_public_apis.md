@@ -337,6 +337,42 @@ for (const part of response.candidates?.[0]?.content?.parts ?? []) {
 
 With the Gemini SDK, tools are declared in the `config.tools` array using `functionDeclarations`. Each declaration specifies the function name, description, and optional parameter schema. The model does not execute the functions, it simply returns a `functionCall` part when it wants to invoke one. Your code is responsible for executing the function and sending the result back as a `functionResponse`.
 
+Here is example output:
+
+```
+[Tool call: list_directory({})]
+
+
+[Tool call: read_file({"filename":"package.json"})]
+
+The directory contains several files, mostly TypeScript files related to `gemini` and `openai` APIs, along with `node_modules`, `package-lock.json`, and `package.json`.
+
+The `package.json` file reveals the following:
+*   **Name:** `llm-public-apis`
+*   **Version:** `1.0.0`
+*   **Type:** `module`
+*   **Scripts:** It defines various scripts for running different tasks, including:
+    *   `gemini`
+    *   `openai`
+    *   `temperature`
+    *   `thinking`
+    *   `conversation`
+    *   `image`
+    *   `structured`
+    *   `gemini-tools`
+    *   `openai-tools`
+*   **Dependencies:**
+    *   `@google/genai`: `^1.0.0`
+    *   `openai`: `^4.77.0`
+*   **Dev Dependencies:**
+    *   `typescript`: `^5.7.0`
+    *   `@types/node`: `^22.0.0`
+    *   `tsx`: `^4.19.0`
+
+In summary, this project is an LLM public APIs example project, version 1.0.0, utilizing both Google's Generative AI and OpenAI APIs, and built with TypeScript.
+```
+
+
 ### OpenAI: Stubbed Weather API
 
 The OpenAI example demonstrates the same pattern using a stubbed `get_weather` function. Rather than calling a real weather service, we return mock data, the focus is on the function calling mechanics.
@@ -412,6 +448,28 @@ if (toolCalls.length > 0) {
 With the OpenAI SDK, tools are passed as `ChatCompletionTool` objects with the `type: "function"` discriminator. The model's response may contain `tool_calls`, which you process and follow up with `role: "tool"` messages carrying the results. The second call to `chat.completions.create` gives the model the tool outputs so it can produce its final answer.
 
 The core loop is the same across both providers: describe the tools, let the model decide when to call them, execute the call, and feed the result back. For production applications, wrap this in a loop allowing the model to make multiple sequential function calls before producing its final response to the user.
+
+Here is example output:
+
+```
+$ npx tsx openai_tools.ts
+[Tool call: get_weather({"city":"Paris","units":"celsius"})]
+{
+  "city": "Paris",
+  "temperature": 22,
+  "conditions": "partly cloudy",
+  "humidity": "65%"
+}
+[Tool call: get_weather({"city":"London","units":"fahrenheit"})]
+{
+  "city": "London",
+  "temperature": 72,
+  "conditions": "partly cloudy",
+  "humidity": "65%"
+}
+
+The weather in Paris is partly cloudy with a temperature of 22°C and a humidity level of 65%. In London, it is also partly cloudy with a temperature of 72°F and the same humidity level of 65%.
+```
 
 
 ## Practical Considerations

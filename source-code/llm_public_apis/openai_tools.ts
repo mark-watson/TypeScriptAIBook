@@ -37,6 +37,9 @@ const response = await client.chat.completions.create({
 });
 
 const toolCalls = response.choices[0].message.tool_calls ?? [];
+if (toolCalls.length > 0) {
+  messages.push(response.choices[0].message);
+}
 for (const call of toolCalls) {
   const args = JSON.parse(call.function.arguments);
   console.log(`[Tool call: get_weather(${JSON.stringify(args)})]`);
@@ -50,7 +53,6 @@ for (const call of toolCalls) {
   };
   console.log(JSON.stringify(weather, null, 2));
 
-  messages.push(response.choices[0].message);
   messages.push({
     role: "tool",
     tool_call_id: call.id,

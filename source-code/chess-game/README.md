@@ -1,4 +1,4 @@
-# Chess Engine & AI Bot (TypeScript)
+# Chess Engine & AI Program (TypeScript)
 
 An educational, high-performance chess engine and AI bot written in modern, idiomatic TypeScript. Runs on Node.js with zero runtime dependencies.
 
@@ -22,7 +22,7 @@ This project implements a complete chess board representation, legal move genera
 - **Efficient Undo/Redo**: Incremental move execution captures volatile state in a lightweight `BoardState` snapshot before modifying the board. `unmakeMove` restores state in O(1) without any board cloning — critical for search performance.
 - **FEN Parser & Generator**: Full round-trip support for Forsyth-Edwards Notation to load, save, and inspect arbitrary chess positions.
 
-### 2. Chess AI Bot (`src/ai.ts`)
+### 2. Chess AI Program (`src/ai.ts`)
 
 - **Negamax Search with Alpha-Beta Pruning**: Symmetric minimax variant that exploits the zero-sum property (`score(white) = -score(black)`) to halve the code footprint while pruning irrelevant branches.
 - **Transposition Table (TT)**: A `Map<bigint, TTEntry>` keyed by Zobrist hash caches evaluated nodes to avoid redundant subtree searches. Stores depth, score, node bound flag (exact, alpha, beta), and best move.
@@ -43,7 +43,7 @@ This project implements a complete chess board representation, legal move genera
 - **Three Game Modes**:
   1. **Play as White** — human moves first
   2. **Play as Black** — bot plays white, human controls black
-  3. **Bot vs Bot** — watch the AI play itself with a half-second pause between moves
+  3. **Program vs Program** — watch the AI play itself with a half-second pause between moves
 - **Visual Board Display**: ANSI color-coded terminal rendering with:
   - Unicode chess glyphs (♔♕♖♗♘♙ / ♚♛♜♝♞♟)
   - Checkered board background (dark/light squares)
@@ -92,7 +92,7 @@ npm install
 npm start
 ```
 
-Choose your mode (play as White, Black, or watch Bot vs Bot), set the AI depth, and enter moves in UCI format (e.g. `e2e4`, `g1f3`, `e7e8q` for promotion).
+Choose your mode (play as White, Black, or watch Program vs Program), set the AI depth, and enter moves in UCI format (e.g. `e2e4`, `g1f3`, `e7e8q` for promotion).
 
 ### Run Move Generation Tests
 

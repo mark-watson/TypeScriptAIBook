@@ -75,12 +75,12 @@ async function playGame(): Promise<void> {
   console.log('\n\x1b[1;36m=== Chess Game ===\x1b[0m\n');
   console.log('1. Play as White');
   console.log('2. Play as Black');
-  console.log('3. Bot vs Bot');
+  console.log('3. Program vs Program');
 
   const modeStr = await ask('\nChoose mode (1-3): ');
   const mode = parseInt(modeStr) || 1;
   const humanColor = mode === 1 ? WHITE : mode === 2 ? BLACK : null;
-  const depthStr = await ask('Bot depth (1-6, default 3): ');
+  const depthStr = await ask('Program depth (1-6, default 3): ');
   const depth = Math.min(6, Math.max(1, parseInt(depthStr) || 3));
 
   const board = new Board();
@@ -103,13 +103,13 @@ async function playGame(): Promise<void> {
       break;
     }
 
-    // Bot turn
+    // Program turn
     if (humanColor === null || board.turn !== humanColor) {
-      console.log(`\x1b[90mBot is thinking (depth ${depth})...\x1b[0m`);
+      console.log(`\x1b[90mProgram is thinking (depth ${depth})...\x1b[0m`);
       const startTime = performance.now();
       const [move, score] = getBestMove(board, depth);
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-      console.log(`Bot plays: ${move.uci()} | eval: ${(score / 100).toFixed(1)} | nodes: ${nodesVisited} | time: ${elapsed}s`);
+      console.log(`Program plays: ${move.uci()} | eval: ${(score / 100).toFixed(1)} | nodes: ${nodesVisited} | time: ${elapsed}s`);
       board.makeMove(move);
       printBoard(board);
       if (humanColor === null) await new Promise(r => setTimeout(r, 500));

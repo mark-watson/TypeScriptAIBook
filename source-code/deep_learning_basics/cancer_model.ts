@@ -1,5 +1,4 @@
-// cancer_model.ts - Neural network for Wisconsin cancer classification using TensorFlow.js
-
+import "./polyfill.js";
 import * as tf from "@tensorflow/tfjs-node";
 import { readFileSync } from "node:fs";
 

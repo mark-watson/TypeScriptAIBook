@@ -6,10 +6,10 @@ Here are a few things to consider when setting up your TypeScript development en
 
 - Use **Node.js** (version 20 or later) as the runtime for all examples.
 - Use **npm** or **pnpm** for managing packages. I use npm in this book since it comes bundled with Node.js.
-- Use **tsx** to run TypeScript files directly without a separate compile step. This is the fastest way to iterate on command-line scripts.
+- Use **npx tsx** to run TypeScript files directly without a separate compile step. This is the fastest way to iterate on command-line scripts.
 - Use Git or another version control system to manage your codebase. I will not cover Git here so [read a good tutorial](https://git-scm.com/docs/gittutorial) if you have not used it before.
-- Use an IDE like VS Code (which has excellent built-in TypeScript support), WebStorm, or a text editor like Emacs or Vim — whatever you are comfortable with.
-- Add comments and documentation to your code. Your "future you" will thank you.
+- Use an IDE like VS Code (which has excellent built-in TypeScript support), WebStorm, or a text editor like Emacs or Vim — whatever you are comfortable with. I almost exclusively use Emacs, but I have an excuse: I am an old man! I have used Emacs for 45 years and old habits die hard.
+- Add comments and documentation to your code. Your "future you" will thank you, as will your human colleagues and agentic coding assistants working with your code.
 
 ## Installing Node.js
 
@@ -71,9 +71,38 @@ You can now run any TypeScript file directly:
 tsx my_script.ts
 ```
 
+Or:
+
+```bash
+npx tsx my_script.ts
+```
+
+### Advantages of `tsx` and `nom tsx`
+
+The distinction between `npx tsx` and `tsx` centers entirely on dependency management and execution context. Both ultimately run the same underlying tool (tsx, the TypeScript Execute CLI powered by esbuild), but how they locate and invoke the executable differs.
+
+I almost always use `npx tsx` but please, dear reader, choose an approach that works best for you.
+
+#### Advantages of `npx tsx`
+- npx (Node Package Executable) acts as a CLI runner wrapper.
+- Zero Installation Required (On-Demand Execution): If tsx is not installed locally or globally, npx will fetch the latest version, cache it temporarily, and run it. This is ideal for one-off scripts or CI/CD pipelines where you want to minimize environment setup.
+- Version Flexibility & Overrides: You can explicitly force a specific version without altering the project's package.json dependencies:
+npx tsx@4.0.0 script.ts
+- Guaranteed Execution Path: It eliminates ambiguities regarding whether the global or local binary is being called, particularly in complex monorepos or environments with corrupted node_modules/.bin symlinks.
+
+#### Advantages of bare `tsx`
+
+- Running tsx directly relies on the shell finding the executable in its PATH or npm script mapping.
+- Speed (Lower Latency): npx introduces a non-trivial startup overhead because it checks for updates and resolves the binary location. Calling tsx directly is instantaneous.
+- Version Consistency & Determinism: By relying on a local installation (npm i -D tsx), you ensure that every developer on the team—and the production build environment—runs the exact same version locked in package-lock.json. npx without a version specifier can introduce breaking changes if a new major version of tsx is released.
+- Seamless npm Script Integration: Inside package.json scripts, npm automatically augments the PATH to include node_modules/.bin. Therefore, using npx inside an npm script is redundant and adds unnecessary overhead:
+
+
 ## Creating a New Project
 
-Every source code directory in this book follows the same pattern: initialize a project with `npm init`, install the required packages, and run scripts with `tsx`. Here is a typical setup:
+For the examples in this book I have already set up projects for each example in the subdirectories in **source-code**.
+
+To set up your own projects follow this pattern: initialize a project with `npm init`, install the required packages, and run scripts with `tsx`. Here is a typical setup:
 
 ```bash
 # Initialize a new project (creates package.json)
@@ -90,13 +119,13 @@ $ npx tsc --init --target ES2022 --module NodeNext \
 # Install libraries the project needs
 $ npm install mathjs
 
-# Run a script directly with tsx
+# Run a script directly with 'tsx' or 'npx tsx'
 $ tsx my_script.ts
 ```
 
 ## Running Existing Projects in directory **source-code**
 
-Every source code directory in this book follows the same pattern: load all required libraries for the current directory with `npm install`and run examples with `tsx`.
+Every source code directory in this book follows the same pattern: load all required libraries for the current directory with `npm install`and run examples with `tsx` or `npx tsx`.
 
 
 

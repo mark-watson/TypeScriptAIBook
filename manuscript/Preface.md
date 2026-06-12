@@ -33,7 +33,7 @@ The example code that I have written for this book is Apache 2 licensed so feel 
 
 The examples for this book (and the entire book manuscript!) are in the GitHub repository [https://github.com/mark-watson/TypeScriptAIBook](https://github.com/mark-watson/TypeScriptAIBook). The code examples are in the directory **source-code**.
 
-A few of the examples use APIs from Google and OpenAI. I assume that you have signed up and have access keys that should be available in the environment variables **GOOGLE_API_KEY** and **OPENAI_API_KEY**. If you don't want to sign up for these services I still hope that you enjoy reading the sample code and example output.
+A few of the examples use APIs from Google and OpenAI. I assume that you have signed up and have access keys that should be available in the environment variables **GOOGLE_API_KEY** and **OPENAI_API_KEY**. If you don't want to sign up for these services I still hope that you enjoy reading the sample code and example output. I also cover using smaller local models using Ollama.
 
 ## NPM Security Concerns
 

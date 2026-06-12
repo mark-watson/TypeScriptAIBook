@@ -1,6 +1,6 @@
 # A TypeScript Tutorial for Command-Line AI Programs
 
-This chapter is a focused TypeScript tutorial covering the language features you will encounter throughout this book. All examples are command-line programs — no browser, DOM, or UI framework is involved. If you are already comfortable with TypeScript you can skip this chapter and use it as a reference.
+This chapter is a focused TypeScript tutorial covering the language features you will encounter throughout this book. All examples are command-line programs — no browser, DOM, or UI framework is involved. If you are already comfortable with TypeScript you can skip this chapter and use it as a later as a reference.
 
 We assume you have a working Node.js and tsx installation as described in the previous chapter.
 

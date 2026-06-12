@@ -24,4 +24,6 @@ npx tsx gemini_thinking.ts
 npx tsx gemini_conversation.ts
 npx tsx gemini_image.ts photo.jpg
 npx tsx gemini_structured.ts
+npx tsx gemini_tools.ts
+npx tsx openai_tools.ts
 ```

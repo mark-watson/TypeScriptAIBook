@@ -9,7 +9,9 @@
     "thinking": "tsx gemini_thinking.ts",
     "conversation": "tsx gemini_conversation.ts",
     "image": "tsx gemini_image.ts",
-    "structured": "tsx gemini_structured.ts"
+    "structured": "tsx gemini_structured.ts",
+    "gemini-tools": "tsx gemini_tools.ts",
+    "openai-tools": "tsx openai_tools.ts"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",

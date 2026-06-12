@@ -257,6 +257,163 @@ console.log(JSON.stringify(result, null, 2));
 Using temperature 0.0 is important for structured output, you want the model to be deterministic and precise rather than creative.
 
 
+## Tool Use (Function Calling)
+
+A limitation of plain text generation is that the model can only produce text, it cannot interact with the outside world. Function calling (also called tool use) bridges this gap. You provide the model with descriptions of available functions, and when the model determines that a function would help answer the user's question, it returns a structured function call instead of (or alongside) text. Your code executes the function and passes the result back to the model, which then incorporates it into its final response.
+
+This pattern enables LLMs to look up real-time data, interact with databases, control external systems, and perform actions beyond text generation. Both Gemini and OpenAI support this capability.
+
+### Gemini: Directory and File Tools
+
+The Gemini example defines two tools: `list_directory` to list files in the current working directory, and `read_file` to read a file's contents. The model is asked to explore the project directory and summarize what it finds.
+
+```typescript
+// gemini_tools.ts - Gemini function calling with directory tools
+
+import { GoogleGenAI } from "@google/genai";
+import { readdir, readFile } from "node:fs/promises";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY! });
+
+const tools = [
+  {
+    functionDeclarations: [
+      {
+        name: "list_directory",
+        description: "List all files in the current working directory.",
+      },
+      {
+        name: "read_file",
+        description: "Read the contents of a file by name.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: { type: "string", description: "Name of the file to read" },
+          },
+          required: ["filename"],
+        },
+      },
+    ],
+  },
+];
+
+const prompt = `Use the available tools to:
+1. List the files in this directory.
+2. Read the package.json file.
+Then summarize what you find.`;
+
+const response = await ai.models.generateContent({
+  model: "gemini-2.5-flash",
+  contents: prompt,
+  config: { tools },
+});
+
+for (const part of response.candidates?.[0]?.content?.parts ?? []) {
+  if (part.text) {
+    console.log(part.text);
+  } else if (part.functionCall) {
+    const { name, args } = part.functionCall;
+    let result: string;
+    if (name === "list_directory") {
+      result = (await readdir(".")).join("\n");
+    } else if (name === "read_file") {
+      result = await readFile(args.filename as string, "utf-8");
+    } else {
+      result = "Unknown function";
+    }
+
+    const followUp = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        { role: "user", parts: [{ text: prompt }] },
+        { role: "model", parts: [{ functionCall: { name, args } }] },
+        { role: "user", parts: [{ functionResponse: { name, response: { result } } }] },
+      ],
+    });
+    console.log(followUp.text);
+  }
+}
+```
+
+With the Gemini SDK, tools are declared in the `config.tools` array using `functionDeclarations`. Each declaration specifies the function name, description, and optional parameter schema. The model does not execute the functions, it simply returns a `functionCall` part when it wants to invoke one. Your code is responsible for executing the function and sending the result back as a `functionResponse`.
+
+### OpenAI: Stubbed Weather API
+
+The OpenAI example demonstrates the same pattern using a stubbed `get_weather` function. Rather than calling a real weather service, we return mock data, the focus is on the function calling mechanics.
+
+```typescript
+// openai_tools.ts - OpenAI function calling with stubbed weather API
+
+import OpenAI from "openai";
+
+const client = new OpenAI(); // reads OPENAI_API_KEY from environment
+
+const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+  {
+    type: "function",
+    function: {
+      name: "get_weather",
+      description: "Get current weather conditions for a city.",
+      parameters: {
+        type: "object",
+        properties: {
+          city: { type: "string", description: "City name" },
+          units: {
+            type: "string",
+            enum: ["celsius", "fahrenheit"],
+            description: "Temperature units",
+          },
+        },
+        required: ["city"],
+      },
+    },
+  },
+];
+
+const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+  { role: "user", content: "What's the weather in Paris? Also check London in fahrenheit." },
+];
+
+const response = await client.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages,
+  tools,
+});
+
+const toolCalls = response.choices[0].message.tool_calls ?? [];
+for (const call of toolCalls) {
+  const args = JSON.parse(call.function.arguments);
+
+  // Stubbed weather data
+  const weather = {
+    city: args.city,
+    temperature: args.units === "fahrenheit" ? 72 : 22,
+    conditions: "partly cloudy",
+    humidity: "65%",
+  };
+
+  messages.push(response.choices[0].message);
+  messages.push({
+    role: "tool",
+    tool_call_id: call.id,
+    content: JSON.stringify(weather),
+  });
+}
+
+if (toolCalls.length > 0) {
+  const followUp = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages,
+  });
+  console.log(followUp.choices[0].message.content);
+}
+```
+
+With the OpenAI SDK, tools are passed as `ChatCompletionTool` objects with the `type: "function"` discriminator. The model's response may contain `tool_calls`, which you process and follow up with `role: "tool"` messages carrying the results. The second call to `chat.completions.create` gives the model the tool outputs so it can produce its final answer.
+
+The core loop is the same across both providers: describe the tools, let the model decide when to call them, execute the call, and feed the result back. For production applications, wrap this in a loop allowing the model to make multiple sequential function calls before producing its final response to the user.
+
+
 ## Practical Considerations
 
 ### Cost
@@ -301,7 +458,7 @@ Any data you send to an API is transmitted to the provider's servers. For sensit
 
 ## Summary
 
-Using LLMs through public APIs is the fastest path from idea to working application. The core pattern is simple across all providers: create a client, send a prompt, process the response. The richness comes from features like multi-turn conversations, multimodal input, web search, structured output, and thinking modes.
+Using LLMs through public APIs is the fastest path from idea to working application. The core pattern is simple across all providers: create a client, send a prompt, process the response. The richness comes from features like multi-turn conversations, multimodal input, web search, structured output, tool use, and thinking modes.
 
 TypeScript is an excellent language for LLM API integration, the official SDKs from Google and OpenAI provide full type definitions, making it easy to discover capabilities and catch errors at compile time.
 

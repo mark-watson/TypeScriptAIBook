@@ -18,7 +18,7 @@ LLM_3_public_apis.md
 LLM_4_local_models.md
 ai-command-line-tool.md
 Part4_symbolic_ai.md
-Symbolic_AI.md
+Search.md
 chess-game.md
 Part5_knowledge_representation.md
 Knowledge_Representation_Graph_and_Relational_Databases.md

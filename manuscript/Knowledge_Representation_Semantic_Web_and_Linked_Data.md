@@ -29,7 +29,7 @@ You will learn how to do the following:
 - See more use cases for SPARQL queries that go beyond the simple SELECT patterns we used earlier.
 - Learn about RDFS sub-property hierarchies and OWL reasoning, which enable more powerful knowledge queries.
 
-The Semantic Web is intended to provide a massive linked set of data for use by software systems just as the World Wide Web provides a massive collection of linked web pages for human reading and browsing. The Semantic Web is like the web in that anyone can generate any content that they want. This freedom to publish anything works for the web because we use our ability to understand natural language to interpret what we read – and often to dismiss material that based upon our own knowledge we consider to be incorrect.
+The Semantic Web is intended to provide a massive linked set of data for use by software systems just as the World Wide Web provides a massive collection of linked web pages for human reading and browsing. The Semantic Web is like the web in that anyone can generate any content that they want. This freedom to publish anything works for the web because we use our ability to understand natural language to interpret what we read, and often to dismiss material that based upon our own knowledge we consider to be incorrect.
 
 Semantic Web and linked data technologies are also useful for smaller amounts of data, an example being a Knowledge Graph containing information for a business. We will further explore Knowledge Graph use cases.
 
@@ -455,9 +455,9 @@ http://news.yahoo.com/s/nm/20080616/ts_nm/worldleaders_trust_dc_1/
 
 We are finished with our quick tutorial on using the SELECT query form. There are three other query forms that I am not covering in this chapter:
 
-- CONSTRUCT – returns a new RDF graph of query results.
-- ASK – returns Boolean true or false indicating if a query matches any triples.
-- DESCRIBE – returns a new RDF graph containing matched resources.
+- CONSTRUCT: returns a new RDF graph of query results.
+- ASK: returns Boolean true or false indicating if a query matches any triples.
+- DESCRIBE: returns a new RDF graph containing matched resources.
 
 We will later use the OPTIONAL query form that allows complex queries to contain patterns that do not have to match.
 
@@ -465,13 +465,13 @@ We will later use the OPTIONAL query form that allows complex queries to contain
 
 We have already seen a few examples of using RDFS to define sub-properties in this chapter. The Web Ontology Language (OWL) extends the expressive power of RDFS. We now look at a few OWL examples. The following RDF data stores support at least some level of OWL reasoning:
 
-- ProtegeOwlApis - compatible with the Protege Ontology editor.
-- Pellet - DL reasoner.
-- Owlim - OWL DL reasoner compatible with some versions of Sesame.
-- Jena - General purpose library that is used in Apache Jena Fuseki.
-- OWLAPI - a simpler API using many other libraries.
-- Stardog - a commercial OWL and RDF reasoning system and datastore.
-- Allegrograph - a commercial RDF+ and RDF reasoning system and datastore.
+- ProtegeOwlApis: compatible with the Protege Ontology editor.
+- Pellet: DL reasoner.
+- Owlim: OWL DL reasoner compatible with some versions of Sesame.
+- Jena: General purpose library that is used in Apache Jena Fuseki.
+- OWLAPI: a simpler API using many other libraries.
+- Stardog: a commercial OWL and RDF reasoning system and datastore.
+- Allegrograph: a commercial RDF+ and RDF reasoning system and datastore.
 
 OWL is more expressive than RDFS in that it supports cardinality, richer class relationships, and Descriptive Logic (DL) reasoning. OWL treats the idea of classes very differently than object oriented programming languages like Java and Smalltalk. In OWL, instances of a class are referred to as individuals and class membership is determined by a set of properties that allow a DL reasoner to infer class membership of an individual (this is called entailment.)
 

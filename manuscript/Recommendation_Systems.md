@@ -35,7 +35,7 @@ The TensorFlow Recommenders approach uses a multi-tower architecture. The **quer
 While TensorFlow Recommenders is a Python library, the concepts apply to any language. In this chapter we implement the core ideas in TypeScript:
 
 1. An item-based collaborative filtering engine that uses adjusted cosine similarity.
-2. An embedding matrix factorization model that learns dense user and item vectors via SGD — the same fundamental approach used inside TensorFlow Recommenders' retrieval models.
+2. An embedding matrix factorization model that learns dense user and item vectors via SGD, the same fundamental approach used inside TensorFlow Recommenders' retrieval models.
 
 ## Project Structure
 
@@ -55,7 +55,7 @@ The simpler of our two approaches. The idea: if two movies tend to be rated simi
 
 ### Cosine Similarity
 
-Two users' rating vectors can be compared using **cosine similarity** — the cosine of the angle between them. Vectors pointing in the same direction (similar taste) produce values near 1; orthogonal vectors produce 0:
+Two users' rating vectors can be compared using **cosine similarity**, the cosine of the angle between them. Vectors pointing in the same direction (similar taste) produce values near 1; orthogonal vectors produce 0:
 
 ```typescript
 export function cosineSimilarity(
@@ -122,7 +122,7 @@ export class ItemBasedRecommender {
   constructor(private topK: number = 20) {}
 ```
 
-It maintains four lookup maps: user-to-item ratings, item-to-user ratings, per-user mean ratings, and a pre-computed similarity index. The `topK` parameter controls how many similar items are stored per movie — a higher value captures more relationships but uses more memory.
+It maintains four lookup maps: user-to-item ratings, item-to-user ratings, per-user mean ratings, and a pre-computed similarity index. The `topK` parameter controls how many similar items are stored per movie, a higher value captures more relationships but uses more memory.
 
 The `fit` method ingests ratings and pre-computes all similarities:
 
@@ -242,7 +242,7 @@ export function evaluate(
 
 The collaborative filtering approach above works well but has a limitation: it can only compare items that share users who rated both. The **embedding matrix factorization** approach solves this by learning dense vector representations (embeddings) for every user and item.
 
-This is the same core technique used in deep learning recommendation systems. TensorFlow Recommenders' retrieval models, for example, learn user and item embeddings in exactly this way — they just add more layers on top.
+This is the same core technique used in deep learning recommendation systems. TensorFlow Recommenders' retrieval models, for example, learn user and item embeddings in exactly this way, they just add more layers on top.
 
 ### How It Works
 
@@ -321,13 +321,13 @@ Let's trace through one update step:
 1. Compute the predicted rating as the dot product of user and item embeddings, plus biases and the global mean.
 2. Compute `error = actual - predicted`.
 3. Update the biases: move them toward reducing the error, with a small regularization pull toward zero.
-4. Update the embeddings: this is the key step. Each dimension of the user embedding is nudged by `lr * (error * itemEmbed[d])` — the user vector moves toward the item vector when the error is positive (we under-predicted, the user liked this more than expected) and away when negative. The item embedding is updated symmetrically.
+4. Update the embeddings: this is the key step. Each dimension of the user embedding is nudged by `lr * (error * itemEmbed[d])`, the user vector moves toward the item vector when the error is positive (we under-predicted, the user liked this more than expected) and away when negative. The item embedding is updated symmetrically.
 
 Notice the careful use of `uOld` and `iOld`: we save the values before updating because both the user and item embeddings depend on each other's pre-update values.
 
 ### What the Embeddings Capture
 
-After training, the learned embeddings capture **latent factors** — abstract properties that the model discovers on its own. In a movie dataset, these might correspond to genre preferences, mood, era, or other patterns that humans might not explicitly label.
+After training, the learned embeddings capture **latent factors**, abstract properties that the model discovers on its own. In a movie dataset, these might correspond to genre preferences, mood, era, or other patterns that humans might not explicitly label.
 
 The `similarItems` method reveals what the model learned by computing cosine similarity between item embeddings:
 
@@ -352,7 +352,7 @@ The `similarItems` method reveals what the model learned by computing cosine sim
   }
 ```
 
-In our demo, the model correctly learns that "The Matrix" is most similar to "Mad Max: Fury Road" (both are sci-fi/action) and "Die Hard" (action), while being dissimilar to romance films — without ever being told about genres.
+In our demo, the model correctly learns that "The Matrix" is most similar to "Mad Max: Fury Road" (both are sci-fi/action) and "Die Hard" (action), while being dissimilar to romance films, without ever being told about genres.
 
 ### Synthetic Dataset
 
@@ -429,7 +429,7 @@ Similar items to 'The Matrix' (by learned embedding):
   Amélie                   (cosine: 0.063)
 ```
 
-The training RMSE drops steadily as the model learns, and the test-set metrics confirm good generalization. The embedding-based model discovers that "The Matrix" is most similar to "Mad Max: Fury Road" and "Die Hard" (all action-heavy movies) — a sensible result given the genre-based preferences in our synthetic data.
+The training RMSE drops steadily as the model learns, and the test-set metrics confirm good generalization. The embedding-based model discovers that "The Matrix" is most similar to "Mad Max: Fury Road" and "Die Hard" (all action-heavy movies), a sensible result given the genre-based preferences in our synthetic data.
 
 You can also run the standalone collaborative filtering demo with a small hand-crafted dataset:
 
@@ -457,7 +457,7 @@ Recommendations for carol:
   Interstellar         (predicted: 2.00)
 ```
 
-Alice likes sci-fi (rated "The Matrix" and "Inception" as 5), so the system recommends "The Dark Knight" — it shares high similarity with her favorites because users who like sci-fi/action tend to like both. Carol prefers romance but hasn't seen "Pulp Fiction" — it gets recommended because Dave (who has similar romance preferences) rated it well.
+Alice likes sci-fi (rated "The Matrix" and "Inception" as 5), so the system recommends "The Dark Knight", it shares high similarity with her favorites because users who like sci-fi/action tend to like both. Carol prefers romance but hasn't seen "Pulp Fiction", it gets recommended because Dave (who has similar romance preferences) rated it well.
 
 ## Comparing the Two Approaches
 
@@ -471,10 +471,10 @@ The demo's model comparison section shows both models evaluated on the same test
   Item-Based CF     0.5909  0.8004
 ```
 
-On this small dataset, item-based CF edges ahead — it has enough direct rating overlap between items to make accurate predictions. However, the embedding model has key advantages that matter at scale:
+On this small dataset, item-based CF edges ahead, it has enough direct rating overlap between items to make accurate predictions. However, the embedding model has key advantages that matter at scale:
 
 - **Generalization**: embeddings can predict ratings for user-item pairs that share no direct rating overlap, by capturing latent patterns.
-- **Scalability**: once trained, predictions are a simple dot product — O(k) per prediction, compared to scanning a similarity list.
+- **Scalability**: once trained, predictions are a simple dot product, O(k) per prediction, compared to scanning a similarity list.
 - **Extensibility**: the embedding approach naturally extends to deep learning. By adding neural network layers on top of the embeddings, you get the multi-tower architectures used by TensorFlow Recommenders and production systems at Netflix, YouTube, and Alibaba.
 
 ## Using the API in Your Own Code
@@ -503,7 +503,7 @@ Both models expect an array of `Rating` objects: `{ userId: string, itemId: stri
 
 ## Recommendation Systems Wrap-up
 
-In this chapter we built two recommendation systems from scratch, demonstrating the progression from simple similarity-based methods to embedding-based matrix factorization — the foundation of modern deep learning recommendation systems.
+In this chapter we built two recommendation systems from scratch, demonstrating the progression from simple similarity-based methods to embedding-based matrix factorization, the foundation of modern deep learning recommendation systems.
 
 The key ideas to take away:
 
@@ -516,7 +516,7 @@ If you need to build a production recommendation system, consider these resource
 
 - Consider using [Amazon Personalize](https://aws.amazon.com/personalize/) which is a turn-key service on AWS.
 - Consider using Google's turn-key [Recommendations AI](https://cloud.google.com/recommendations).
-- For a deeper dive into embedding-based models, study the [TensorFlow Recommenders](https://www.tensorflow.org/recommenders) tutorials — our `EmbeddingRecommender` implements the same core mathematics.
+- For a deeper dive into embedding-based models, study the [TensorFlow Recommenders](https://www.tensorflow.org/recommenders) tutorials, our `EmbeddingRecommender` implements the same core mathematics.
 - For TypeScript-native solutions at scale, implement the models in this chapter using TensorFlow.js on Node.js to leverage GPU acceleration.
 - A research idea: transform input training data to a textual representation for input to a Transformer model, based on the paper [Behavior Sequence Transformer for E-commerce Recommendation in Alibaba](https://arxiv.org/abs/1905.06874).
 

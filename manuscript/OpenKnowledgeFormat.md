@@ -68,7 +68,7 @@ a record here within seconds via Change Data Capture.
 ...
 ```
 
-Notice how easy this is to read! A human can view it in a terminal or edit it in VS Code, git tracks every change, and—as we'll see next—it is perfectly set up for programmatic parsing.
+Notice how easy this is to read! A human can view it in a terminal or edit it in VS Code, git tracks every change, and, as we'll see next, it is perfectly set up for programmatic parsing.
 
 
 ## Defining the OKF Data Model
@@ -356,7 +356,7 @@ export class OKFAgent {
 
   static SYSTEM_PROMPT =
     `You are a data knowledge assistant. You have been given excerpts from
-an Open Knowledge Format (OKF) knowledge bundle — a collection of
+an Open Knowledge Format (OKF) knowledge bundle, a collection of
 structured documentation about data tables, metrics, and operational
 playbooks for a retail analytics platform.
 

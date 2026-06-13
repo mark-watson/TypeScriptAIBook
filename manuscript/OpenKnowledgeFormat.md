@@ -44,7 +44,7 @@ bundle/
     └── revenue_drop_investigation.md # Operational guide for incident management
 ```
 
-Let's look at one of these concept files, dear reader, to see how clean and legible it is. Here is `bundle/tables/sales_events.md`:
+Let's look at one of these concept files, dear reader, to see how clean and legible it is. Here is `bundle/tables/sales_events.md` (partial listing only for brevity, read through the files in bundle/ directory):
 
 ```yaml
 ---
@@ -70,7 +70,6 @@ a record here within seconds via Change Data Capture.
 
 Notice how easy this is to read! A human can view it in a terminal or edit it in VS Code, git tracks every change, and—as we'll see next—it is perfectly set up for programmatic parsing.
 
----
 
 ## Defining the OKF Data Model
 
@@ -483,7 +482,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]!).href) {
 }
 ```
 
----
 
 ## Running the Explorer and Sample Output
 
@@ -512,8 +510,6 @@ According to metrics/customer_ltv, this anonymous transaction rate represents a 
 
 Isn't that neat, dear reader? Because the agent gets the raw text from the playbook and table schemas, it is able to synthesize an answer that connects the data-engineering details (e.g., NULL rates in `sales_events`) with the operational playbook guidance and metrics.
 
----
-
 ## Summary and Future Improvements
 
 OKF is a useful tool because it fits into existing developer workflows. Instead of checking a web portal or wiki, you update markdown files in git. This means your documentation, metrics definitions, and playbooks are versioned right alongside your code. Furthermore, as we have shown, it is trivial to load these documents as context into a local LLM, turning static documentation into an interactive, context-aware AI data analyst.
@@ -522,6 +518,6 @@ If you want to take this example further in your own projects, dear reader, I re
 
 Here are two suggested projects for you, dear reader, to further experiment with OKF:
 
-- **Project 1: Automatic OKF Generators.** Write a Python pipeline script that inspects a PostgreSQL or BigQuery schema, extracts the column names and comments, and automatically generates or updates the frontmatter and schema tables in `bundle/tables/<table_name>.md`.
+- **Project 1: Automatic OKF Generators.** Write a Python pipeline script that inspects a SQLite, PostgreSQL or BigQuery schema, extracts the column names and comments, and automatically generates or updates the frontmatter and schema tables in `bundle/tables/<table_name>.md`.
 - **Project 2: Vector Search for OKF Bundles.** Replace the simple substring-matching index in `KnowledgeBundle.search()` with a vector database. Write a script to generate text embeddings for each concept using an Ollama embedding model (like `nomic-embed-text`) and perform semantic retrieval instead of keyword search.
 

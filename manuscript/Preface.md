@@ -37,7 +37,7 @@ A few of the examples use APIs from Google and OpenAI. I assume that you have si
 
 ## NPM Security Concerns
 
-Dear reader, I have concern about "6pm security problems" which refers to the npm/JavaScript supply chain attacks that target automated CI/CD build windows, often occurring during late afternoon or off-hours when developer oversight is low.
+Dear reader, I have concerns about what is often called "6pm security problems" which refers to the npm/JavaScript supply chain attacks that target automated CI/CD build windows, often occurring during late afternoon or off-hours when developer oversight is low.
 
 The recent May 2026 "Mini Shai-Hulud" attack by TeamPCP (which compromised TanStack and Mistral AI packages within minutes) and the March 2026 Axios compromise perfectly illustrate this. Attackers look for automated gaps to push malicious payloads that steal tokens and self-propagate before teams notice at the start of the next business day.
 

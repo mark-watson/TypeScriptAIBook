@@ -16,8 +16,8 @@ Before diving into the code, let's understand the key idea behind our detector. 
 
 Every Gaussian distribution is characterized by two numbers:
 
-- **Mean (`\mu`$)**: the average value. This is the center of the bell curve.
-- **Variance (`\sigma^2`$)**: how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
+- **Mean (mu)**: the average value. This is the center of the bell curve.
+- **Variance (sigma^2)**: how spread out the values are. A small variance means values cluster tightly around the mean; a large variance means they are more spread out.
 
 The **Gaussian probability density function (PDF)** tells us how likely a particular value is, given our distribution:
 

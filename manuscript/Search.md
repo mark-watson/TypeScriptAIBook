@@ -19,8 +19,6 @@ Depth-First Search is an algorithm for traversing or searching tree or graph dat
 
 DFS is naturally recursive, which makes it elegant to implement. However, when searching general graphs (which may contain cycles), we must keep track of **visited** nodes to prevent infinite recursion.
 
----
-
 ## Implementing Graph Search in TypeScript
 
 Here we define a simple `Graph` implementation in TypeScript. We represent nodes with a unique string identifier and an optional note, and directed edges using an adjacency list.
@@ -188,7 +186,6 @@ if (resultPath) {
      - Otherwise, iterate through all of `currentId`'s neighbors. If a neighbor has not been visited, recursively call `dfs` on it.
      - If all neighbors are explored and the goal is not found, we **backtrack** by popping `currentId` from `path` and returning `false`.
 
----
 
 ## Example Run
 

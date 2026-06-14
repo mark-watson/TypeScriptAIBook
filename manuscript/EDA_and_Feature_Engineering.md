@@ -11,7 +11,7 @@ The examples for this chapter are in the directory **source-code/data_analysis_a
 {width: "80%"}
 ![Architecture diagram for EDA and feature engineering pipeline](FIG_data_analysis_and_feature_engineering.jpg)
 
-We continue using the California Housing dataset from the previous chapter.
+We continue using the California Housing dataset from a previous chapter.
 
 ## Exploratory Data Analysis
 

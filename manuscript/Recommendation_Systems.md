@@ -248,22 +248,22 @@ This is the same core technique used in deep learning recommendation systems. Te
 
 The idea is elegant: represent each user as a vector of `k` numbers and each item as another vector of `k` numbers. The predicted rating is the dot product of these vectors, plus bias terms:
 
-{$$}
+```latexmath
 \hat{r}_{ui} = \mu + b_u + b_i + \mathbf{p}_u \cdot \mathbf{q}_i
-{/$$}
+```
 
 Where:
-- {$$}\mu{/$$} is the global mean rating
-- {$$}b_u{/$$} is the user bias (does this user rate things high or low?)
-- {$$}b_i{/$$} is the item bias (is this movie generally well-liked?)
-- {$$}\mathbf{p}_u{/$$} is the user embedding vector
-- {$$}\mathbf{q}_i{/$$} is the item embedding vector
+- `\mu`$ is the global mean rating
+- `b_u`$ is the user bias (does this user rate things high or low?)
+- `b_i`$ is the item bias (is this movie generally well-liked?)
+- `\mathbf{p}_u`$ is the user embedding vector
+- `\mathbf{q}_i`$ is the item embedding vector
 
 The model learns all of these parameters by minimizing the squared error on training ratings plus L2 regularization to prevent overfitting:
 
-{$$}
+```latexmath
 \min \sum_{(u,i)} (r_{ui} - \hat{r}_{ui})^2 + \lambda(\|\mathbf{p}_u\|^2 + \|\mathbf{q}_i\|^2 + b_u^2 + b_i^2)
-{/$$}
+```
 
 ### The Training Loop
 

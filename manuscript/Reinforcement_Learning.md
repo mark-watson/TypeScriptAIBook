@@ -37,9 +37,9 @@ Let's start by defining the key terms:
 - **Fully observable**: the agent can see the complete state of the environment at each step.
 - **Stochastic environment**: transitions between states are not deterministic.
 - **Markov property**: the future depends only on the current state and action, not on the history.
-- **Bellman equation**: {$$}V(s) = \max_a \left[ R(s,a) + \gamma \sum P(s' \mid s, a) V(s') \right]{/$$} where {$$}\gamma{/$$} (gamma) is the discount factor.
+- **Bellman equation**: `V(s) = \max_a \left[ R(s,a) + \gamma \sum P(s' \mid s, a) V(s') \right]`$ where `\gamma`$ (gamma) is the discount factor.
 
-The **discount factor** {$$}\gamma{/$$} (between 0 and 1) controls how much the agent values future rewards versus immediate rewards.
+The **discount factor** `\gamma`$ (between 0 and 1) controls how much the agent values future rewards versus immediate rewards.
 
 ### Solving MDPs: Value Iteration in TypeScript
 
@@ -106,9 +106,9 @@ When the transition and reward models are unknown, the agent must learn through 
 
 The Q-learning update rule is:
 
-{$$}
+```latexmath
 Q(s,a) \leftarrow Q(s,a) + \alpha \left[ r + \gamma \max_{a'} Q(s',a') - Q(s,a) \right]
-{/$$}
+```
 
 We implement a FrozenLake-style environment and Q-learning agent entirely in TypeScript:
 

@@ -10,6 +10,8 @@ TypeScript's core value proposition is static typing. The compiler catches type 
 
 ### Primitive Types
 
+Primitive types are the most basic building blocks of TypeScript's type system. They represent simple, single values like strings, numbers, and booleans. You can either explicitly annotate their types or let TypeScript infer them automatically based on the assigned value.
+
 ```typescript
 // Explicit type annotations
 const name: string = "scikit-learn";
@@ -22,6 +24,8 @@ const layers = 96;               // inferred as number
 ```
 
 ### Arrays and Tuples
+
+Arrays and tuples allow you to group multiple values together. While arrays represent collections where all elements share the same type, tuples are fixed-length arrays where each index is associated with a specific, predetermined type. You can also destructure tuples to easily extract their individual elements.
 
 ```typescript
 // Arrays: all elements are the same type
@@ -113,6 +117,8 @@ const metrics: Record<string, number> = {
 ## Functions
 
 ### Typed Parameters and Return Values
+
+In TypeScript, you should explicitly declare the types of a function's parameters and its return value. This ensures that the function is called with the correct arguments and that the calling code correctly handles whatever value is returned, which is especially useful for mathematical and distance calculations.
 
 ```typescript
 function euclideanDistance(a: number[], b: number[]): number {
@@ -219,6 +225,8 @@ async function fetchMultiple(urls: string[]): Promise<string[]> {
 
 ### Typed API Responses
 
+When making external network requests to AI APIs, the responses returned by `fetch` are untyped by default. You can define an interface that matches the expected JSON structure and cast the resolved response promise to that interface. This enables autocomplete and compile-time checks when accessing properties like token usage and generated text.
+
 ```typescript
 interface ChatResponse {
   text: string;
@@ -314,6 +322,8 @@ TypeScript uses ES modules. Each file is a module that explicitly exports and im
 
 ### Exporting
 
+To share functions, classes, interfaces, or constants between files, you use the `export` keyword. Exported declarations can then be imported by other files in your project, promoting code reuse and logical separation.
+
 ```typescript
 // mathUtils.ts
 export function dotProduct(a: number[], b: number[]): number {
@@ -329,6 +339,8 @@ export const EPSILON = 1e-8;
 
 ### Importing
 
+You use the `import` keyword to bring exported variables, functions, or classes from other modules into the current file. In Node.js environment projects, you must specify the file path and include the appropriate file extension.
+
 ```typescript
 // main.ts
 import { dotProduct, vectorAdd, EPSILON } from "./mathUtils.js";
@@ -340,6 +352,8 @@ console.log(result);  // 32
 Note the `.js` extension in the import path, this is required when using Node.js ES modules with TypeScript's `NodeNext` module resolution.
 
 ### Default Exports
+
+A module can also designate a single value or class as its default export. Default exports can be imported without curly braces and can be renamed arbitrarily in the importing file, which is a common pattern when exporting a primary class.
 
 ```typescript
 // model.ts
@@ -356,6 +370,8 @@ import LinearRegression from "./model.js";
 TypeScript provides structured error handling that is essential when working with APIs and file I/O.
 
 ### Try/Catch with Type Narrowing
+
+When handling errors in asynchronous code or API calls, you can throw custom error classes that contain extra context like status codes. Within a `catch` block, you use the `instanceof` operator to narrow the type of the caught error, allowing you to selectively handle specific errors (like retrying transient network issues) while rethrowing others.
 
 ```typescript
 class ApiError extends Error {
@@ -567,6 +583,8 @@ function loadConfig(): AppConfig {
 ```
 
 ### Progress Reporting for Long Operations
+
+For long-running processes such as training loops or large batch predictions, providing real-time feedback is crucial. You can write a helper function that prints progress updates using `process.stdout.write` and standard escape sequences to overwrite the current terminal line.
 
 ```typescript
 function printProgress(current: number, total: number, label: string): void {

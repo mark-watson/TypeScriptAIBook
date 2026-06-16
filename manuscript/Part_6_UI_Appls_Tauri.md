@@ -2,6 +2,8 @@
 
 **Note: Dear Reader, I use macOS for my development. That said Tauri is fully cross-platform. It is not restricted to macOS. It provides native support for Windows, Linux, macOS, and as of Tauri v2, iOS and Android.**
 
+The source code for the Tauri examples in the next four chapters is located in the directory **TypeScriptAIBook/source-code/UI_apps_with_Tauri**.
+
 For building web and macOS apps with TypeScript in 2026, Tauri is the definitive framework for a clean, minimalist approach.
 Tauri flips the Electron model. Instead of shipping a browser, it renders your TypeScript web UI using macOS's native webview. The resulting desktop applications are incredibly small (often under 10MB) and launch almost instantly.
 Because Tauri compiles down to native binaries, it runs exceptionally efficiently on Apple Silicon. Whether you are running services on a Mac Mini or developing on an M4 Air, it leverages the local hardware without the thermal and memory overhead associated with Chromium-based wrappers.

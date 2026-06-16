@@ -122,7 +122,7 @@ window.addEventListener("DOMContentLoaded", () => {
 - **Line 1**: We import the `invoke` function from the Tauri API (`@tauri-apps/api/core`). This function is the IPC bridge. Under the hood, it serializes arguments into JSON, transmits them to the Rust backend, and returns a Promise that resolves when the Rust backend sends a response back.
 - **Lines 3–4**: We define variables to hold references to our DOM elements. We type them as `HTMLInputElement` and `HTMLElement` or `null` to satisfy the TypeScript compiler's strict safety checks.
 - **Lines 6–12**: The `greet()` asynchronous function. If our DOM element references are not null, we call `invoke("greet", { name: greetInputEl.value })`. The first argument is the name of the Rust command we want to call. The second argument is a payload object mapping key-value arguments. The return value is awaited and assigned directly to the text content of `greetMsgEl`.
-- **Lines 14–22**: We listen for the `DOMContentLoaded` event to ensure the DOM tree is fully parsed before querying elements. Once loaded, we lookup `#greet-input` and `#greet-msg`, and add a submit listener to our form (`#greet-form`).
+- **Lines 14–21**: We listen for the `DOMContentLoaded` event to ensure the DOM tree is fully parsed before querying elements. Once loaded, we lookup `#greet-input` and `#greet-msg`, and add a submit listener to our form (`#greet-form`).
 - **Line 18**: Inside the form submit handler, we call `e.preventDefault()` to stop the browser from reloading the page when the form is submitted. We then trigger the asynchronous `greet()` function.
 
 ---

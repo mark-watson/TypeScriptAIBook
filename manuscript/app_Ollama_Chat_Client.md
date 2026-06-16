@@ -1,8 +1,8 @@
 # Building a Local LLM Chat Client with Ollama
 
-This is the most substantial project in our collection, and I think it's also the most rewarding. We're going to build a full-featured chat client for Ollama — the popular tool for running large language models locally on your own hardware. The finished application gives you a dark-themed, multi-session chat interface that streams responses token-by-token, renders markdown in assistant messages, auto-detects which models you have installed, and persists your conversation history across restarts.
+This is the most substantial project in our collection of Tauri examples, and I think it's also the most rewarding. We're going to build a full-featured chat client for Ollama, the popular tool for running large language models locally on your own hardware. We developed an Ollama client library in an earlier chapter that we reuse here (see directory **source-code/llm_local_models**).  The finished application gives you a dark-themed, multi-session chat interface that streams responses token-by-token, renders markdown in assistant messages, auto-detects which models you have installed, and persists your conversation history across restarts.
 
-What I find particularly interesting about this project is the architecture: the Rust backend does almost nothing. All of the intelligence — the streaming HTTP calls to Ollama, the session management, the rendering — lives in a single TypeScript file. Tauri is simply providing us with a native window and the freedom to make cross-origin HTTP requests to Ollama's local API. This is a great example of how Tauri v2 lets you build desktop applications that are really just well-packaged web apps with superpowers.
+What I find particularly interesting about this project is the architecture: the Rust backend does almost nothing. All of the intelligence including the streaming HTTP calls to Ollama, the session management, the rendering lives in a single TypeScript file. Tauri is simply providing us with a native window and the freedom to make cross-origin HTTP requests to Ollama's local API. This is a great example of how Tauri v2 lets you build desktop applications that are really just well-packaged web apps with superpowers. This is not a book on Rust programming so I am not using one of the powerful features of Tauri.
 
 ## Project Structure
 
@@ -18,10 +18,10 @@ ollama-client-app/
 │   └── styles.css          ← Dark theme design system (596 lines)
 └── src-tauri/
     ├── tauri.conf.json      ← Window size, security, bundling
-    └── src/lib.rs           ← Minimal Rust — just bootstraps the window
+    └── src/lib.rs           ← Minimal Rust that just bootstraps the window
 ```
 
-The file count is small, but don't let that fool you — there's a lot happening in **main.ts** and **styles.css**. I've intentionally kept everything in vanilla TypeScript with no framework. No React, no Vue, no Svelte. Just the DOM APIs that browsers give us for free. For an application of this complexity, that's a deliberate choice: the entire chat client loads instantly, has zero framework overhead, and is easy to understand top-to-bottom.
+The file count is small, but don't let that fool you because there's a lot happening in **main.ts** and **styles.css**. I've intentionally kept everything in vanilla TypeScript with no framework: no React, no Vue, no Svelte. Here we just use the DOM APIs that browsers give us for free. For an application of this complexity, that's a deliberate choice: the entire chat client loads instantly, has zero framework overhead, and is easy to understand top-to-bottom.
 
 ## The HTML Shell
 
@@ -132,7 +132,7 @@ The **index.html** file defines the complete layout structure. It's a two-column
 
 A few things worth noticing here. The sidebar has three vertical sections: a header with the "New Chat" button, a scrollable session list that gets populated dynamically by our TypeScript, and a footer with the model selector dropdown. The model `<select>` starts with some hardcoded options, but as you'll see shortly, our code replaces these with whatever models Ollama actually has available.
 
-The main area uses a flexbox column layout. The chat messages area takes up all available space (via `flex: 1`), and the input bar sticks to the bottom. There's a welcome screen shown when no session is active — it gets removed dynamically once the user starts chatting.
+The main area uses a flexbox column layout. The chat messages area takes up all available space (via `flex: 1`), and the input bar sticks to the bottom. There's a welcome screen shown when no session is active it gets removed dynamically once the user starts chatting.
 
 Notice the status indicator at the very bottom: a small dot and text that shows whether Ollama is reachable. This is a simple UX touch that saves users from wondering why nothing is happening when they haven't started Ollama.
 
@@ -179,11 +179,11 @@ const SYSTEM_PROMPT =
 const STORAGE_KEY = "ollama-chat-sessions";
 ```
 
-The type definitions mirror Ollama's own API conventions. The `Msg` interface matches the message format that Ollama's `/api/chat` endpoint expects — each message has a `role` (system, user, or assistant) and a `content` string. This is the same conversation format used by OpenAI's API, so if you've worked with ChatGPT's API before, this will feel familiar.
+The type definitions mirror Ollama's own API conventions. The `Msg` interface matches the message format that Ollama's `/api/chat` endpoint expects:  each message has a `role` (system, user, or assistant) and a `content` string. This is the same conversation format used by OpenAI's API, so if you've worked with ChatGPT's API before, this will feel familiar.
 
 The `Session` interface is our own invention. Each session tracks a unique `id`, a display `title` (derived from the first user message), the full `messages` array including the system prompt, which `model` to use, and a `createdAt` timestamp. We store an array of these sessions in localStorage.
 
-`OLLAMA_BASE` points to Ollama's default local server. If you've configured Ollama to run on a different port, you'd change this constant. The `SYSTEM_PROMPT` instructs the model to be concise and use markdown — this helps the assistant produce structured responses that our markdown renderer can format nicely.
+`OLLAMA_BASE` points to Ollama's default local server. If you've configured Ollama to run on a different port, you'd change this constant. The `SYSTEM_PROMPT` instructs the model to be concise and use markdown which helps the assistant produce structured responses that our markdown renderer can format nicely.
 
 ### Application State and DOM References
 
@@ -207,7 +207,7 @@ let statusText: HTMLElement;
 let welcomeScreen: HTMLElement | null;
 ```
 
-The state is deliberately simple: a flat array of sessions, the ID of whichever session is currently active, and a boolean flag to prevent the user from sending messages while a response is still streaming. That `isStreaming` flag is important — without it, a user could fire off multiple requests simultaneously and get interleaved responses.
+The state is deliberately simple: a flat array of sessions, the ID of whichever session is currently active, and a boolean flag to prevent the user from sending messages while a response is still streaming. That `isStreaming` flag is important because without it, a user could fire off multiple requests simultaneously and get interleaved responses.
 
 The DOM references are declared at module scope and assigned during initialization. This is a pattern I like for vanilla TypeScript applications: you grab all your references once at startup, and then every function can use them without re-querying the DOM. It's fast and explicit.
 
@@ -280,11 +280,11 @@ function renderMarkdown(text: string): string {
 }
 ```
 
-The key insight here is the order of operations. We process code blocks *first*, before any other transformation, because code blocks should be treated as literal text — we don't want bold or italic processing inside a code fence. After code blocks, we handle inline code, then bold (`**text**`), then italic (`*text*`). The italic regex uses negative lookbehinds and lookaheads (`(?<!\*)` and `(?!\*)`) to avoid matching the `**` sequences that have already been handled as bold.
+The key insight here is the order of operations. We process code blocks *first*, before any other transformation, because code blocks should be treated as literal text: we don't want bold or italic processing inside a code fence. After code blocks, we handle inline code, then bold (`**text**`), then italic (`*text*`). The italic regex uses negative lookbehinds and lookaheads (`(?<!\*)` and `(?!\*)`) to avoid matching the `**` sequences that have already been handled as bold.
 
 The list processing is a two-pass approach: first we wrap each `- item` line in `<li>` tags, then we group consecutive `<li>` elements inside a `<ul>`. Finally, double newlines become paragraph breaks and single newlines become `<br>` tags.
 
-Is this a full markdown parser? Absolutely not — it doesn't handle headers, ordered lists, links, images, or nested structures. But for chat responses from an LLM, it covers the patterns that matter most: code blocks, inline code, bold, italic, and bullet lists. That's a good engineering tradeoff for a chat client.
+Is this a full markdown parser? Absolutely not, it doesn't handle headers, ordered lists, links, images, or nested structures. But for chat responses from an LLM, it covers the patterns that matter most: code blocks, inline code, bold, italic, and bullet lists. That's a good engineering tradeoff for a chat client.
 
 ### Session Persistence
 
@@ -311,7 +311,7 @@ function loadSessions(): void {
 }
 ```
 
-We're using `localStorage` for persistence, which means your chat history survives page reloads and application restarts. The entire sessions array — including all messages — is serialized to JSON and stored under a single key. Both functions wrap their logic in try/catch blocks because `localStorage` can throw in several scenarios: the storage quota is exceeded, the browser is in private mode with storage disabled, or the stored JSON is corrupt.
+We're using `localStorage` for persistence, which means your chat history survives page reloads and application restarts. The entire sessions array, including all messages, is serialized to JSON and stored under a single key. Both functions wrap their logic in try/catch blocks because `localStorage` can throw in several scenarios: the storage quota is exceeded, the browser is in private mode with storage disabled, or the stored JSON is corrupt.
 
 The trade-off with this approach is that `localStorage` has a 5–10 MB limit depending on the browser. For a local chat client, that's quite a lot of conversations, but if you were building a production application you might want to use IndexedDB or a SQLite database via a Tauri plugin. For our purposes, `localStorage` keeps things simple and requires zero additional dependencies.
 
@@ -455,7 +455,7 @@ function renderSessionList(): void {
 }
 ```
 
-Each session item in the sidebar shows the title, a message count (excluding the system prompt), and a formatted timestamp. The delete button is initially invisible (via CSS `opacity: 0`) and only appears on hover — a common UX pattern that keeps the interface clean while still providing the functionality.
+Each session item in the sidebar shows the title, a message count (excluding the system prompt), and a formatted timestamp. The delete button is initially invisible (via CSS `opacity: 0`) and only appears on hover which is a common UX pattern that keeps the interface clean while still providing the functionality.
 
 Notice how the click handler on the session item checks `target.closest(".btn-delete")` before switching sessions. This prevents a click on the delete button from *also* triggering a session switch. The delete button gets its own click handler with `e.stopPropagation()` to prevent the event from bubbling up to the parent.
 
@@ -543,9 +543,9 @@ function scrollToBottom(): void {
 
 The `renderChatMessages()` function does a full re-render of the chat area. When there's no active session, it shows the welcome screen. Otherwise, it iterates through all messages, skipping the system prompt (which is for the LLM's eyes only, not the user's). Each message gets passed to `appendMessageBubble()`, which constructs a message element with an avatar and a content bubble.
 
-User messages get simple HTML escaping with newline-to-`<br>` conversion, while assistant messages go through our `renderMarkdown()` function. The `streaming` parameter controls whether a blinking cursor CSS class is applied — this gives the user a visual cue that more text is coming.
+User messages get simple HTML escaping with newline-to-`<br>` conversion, while assistant messages go through our `renderMarkdown()` function. The `streaming` parameter controls whether a blinking cursor CSS class is applied and this gives the user a visual cue that more text is coming.
 
-The `scrollToBottom()` function uses `requestAnimationFrame` to ensure the scroll happens after the DOM has been updated. This is a subtle but important detail — without `requestAnimationFrame`, the scroll might happen before the browser has laid out the new content, and the chat wouldn't scroll all the way down.
+The `scrollToBottom()` function uses `requestAnimationFrame` to ensure the scroll happens after the DOM has been updated. This is a subtle but important detail because without `requestAnimationFrame`, the scroll might happen before the browser has laid out the new content, and the chat wouldn't scroll all the way down.
 
 ### Ollama API Integration
 
@@ -614,7 +614,7 @@ function setStatus(
 
 The `checkOllama()` function serves two purposes: it verifies that Ollama is running and reachable, and it discovers which models are available. Ollama's `/api/tags` endpoint returns a JSON object with a `models` array, each entry containing a `name` field (like `"llama3.2:3b"` or `"gemma4:12b-it-qat"`). We use this to dynamically populate the model dropdown.
 
-The `populateModels()` function is careful to preserve the user's current selection if that model is still available. This matters because we call `checkOllama()` at startup — if the user had previously selected a specific model and it's still installed, the dropdown should show it.
+The `populateModels()` function is careful to preserve the user's current selection if that model is still available. This matters because we call `checkOllama()` at startup so for example if the user had previously selected a specific model and it's still installed, the dropdown should show it.
 
 The status indicator uses three states: `connected` (green dot), `error` (red dot), and `checking` (amber dot, the default). The CSS handles the visual styling with colored backgrounds and subtle glowing box-shadows.
 
@@ -747,9 +747,9 @@ async function sendMessage(userText: string): Promise<void> {
 
 Let me walk through the streaming architecture in detail, because it's the most important pattern in this chapter.
 
-**The Ollama Chat API.** We POST to `/api/chat` with three key fields: the `model` name, the full `messages` array (including the system prompt and all previous conversation turns), and `stream: true`. That last field is crucial — it tells Ollama to send the response as a series of newline-delimited JSON (NDJSON) chunks rather than waiting for the complete response.
+**The Ollama Chat API.** We POST to `/api/chat` with three key fields: the `model` name, the full `messages` array (including the system prompt and all previous conversation turns), and `stream: true`. That last field is crucial because it tells Ollama to send the response as a series of newline delimited JSON (NDJSON) chunks rather than waiting for the complete response.
 
-**ReadableStream + TextDecoder.** When `stream: true` is set, `fetch()` returns a response whose body is a `ReadableStream`. We obtain a reader via `res.body.getReader()` and create a `TextDecoder` to convert the raw byte chunks into strings. The `{ stream: true }` option on `decoder.decode()` tells the decoder not to flush — important because a multi-byte UTF-8 character might be split across two chunks.
+**ReadableStream + TextDecoder.** When `stream: true` is set, `fetch()` returns a response whose body is a `ReadableStream`. We obtain a reader via `res.body.getReader()` and create a `TextDecoder` to convert the raw byte chunks into strings. The `{ stream: true }` option on `decoder.decode()` tells the decoder not to flush which is important because a multi-byte UTF-8 character might be split across two chunks.
 
 **NDJSON parsing.** Each chunk from Ollama is a JSON object on its own line, like:
 

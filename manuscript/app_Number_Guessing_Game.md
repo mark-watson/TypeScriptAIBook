@@ -2,6 +2,8 @@
 
 Sometimes the best way to learn a framework is to build something simple. In this chapter we build a number guessing game as a Tauri v2 desktop application using Vite and vanilla TypeScript. The app picks a random number between 1 and 100, the player guesses, and the app responds with "higher," "lower," or "win." It is a tiny project, but it teaches us several important things: how Tauri wraps a web frontend into a native window, how vanilla TypeScript handles DOM events without a framework like React or Vue, and — perhaps most importantly — that **not every Tauri app needs custom Rust backend commands**.
 
+Dear reader, the example in this chapter is very simple. Once you understand how we use TypeScript application code to interact with DOM elements and events, feel free to move on to the next two chapters that have real applications that I wrote for my own use.
+
 Many Tauri tutorials focus on the `invoke` bridge between TypeScript and Rust. That bridge is powerful when you need filesystem access, system-level networking, or heavy computation. But for a game whose entire state fits in a single integer, all of the logic lives comfortably on the frontend. The Rust side is pure scaffolding: Tauri's default boilerplate with no custom commands called by our game code. This is a useful mental model. Think of Tauri as a spectrum: on one end you have apps that are essentially web pages in a native window, and on the other end you have apps where the frontend is a thin shell over a complex Rust backend. Our number guessing game sits firmly at the simple end, and that is perfectly fine.
 
 The examples for this chapter are in the directory **number-guess-app**.

@@ -1,8 +1,8 @@
 # Querying the Semantic Web with SPARQL
 
-The Semantic Web is one of the most ambitious ideas in the history of computing: a vision of the World Wide Web where data is not just readable by humans, but *understandable* by machines. Tim Berners-Lee originally proposed it in 2001 as an extension of the existing web, and while the full vision has not been realized in the way he imagined, parts of it have become remarkably successful. Two of the largest publicly accessible knowledge graphs in the world—DBPedia and Wikidata—expose billions of structured facts through a query language called SPARQL, and anyone can query them for free.
+The Semantic Web is one of the most ambitious ideas in the history of computing: a vision of the World Wide Web where data is not just readable by humans, but *understandable* by machines. Tim Berners-Lee originally proposed it in 2001 as an extension of the existing web, and while the full vision has not been realized in the way he imagined, parts of it have become remarkably successful. Two of the largest publicly accessible knowledge graphs in the world, DBPedia and Wikidata, expose billions of structured facts through a query language called SPARQL, and anyone can query them for free.
 
-In this chapter, we will build a desktop SPARQL client using Tauri v2, Vite, and vanilla TypeScript. The application lets you select an endpoint (DBPedia or Wikidata), write a SPARQL query in a text area, and see the results rendered as a formatted table. Along the way, I will introduce you to the core Semantic Web concepts—RDF triples, knowledge graphs, and the SPARQL query language—and show you how surprisingly little code is needed to tap into these massive knowledge bases from a TypeScript application.
+In this chapter, we will build a desktop SPARQL client using Tauri v2, Vite, and vanilla TypeScript. The application lets you select an endpoint (DBPedia or Wikidata), write a SPARQL query in a text area, and see the results rendered as a formatted table. Along the way, I will introduce you to the core Semantic Web concepts (RDF triples, knowledge graphs, and the SPARQL query language) and show you how surprisingly little code is needed to tap into these massive knowledge bases from a TypeScript application.
 
 This project lives in the **semantic-web-app** directory and is directly inspired by the knowledge representation examples in my earlier TypeScript AI book. If you have worked through those examples, you will recognize the same patterns here, now wrapped in a native desktop UI.
 
@@ -18,9 +18,9 @@ The foundation of the Semantic Web is RDF (Resource Description Framework). RDF 
 <http://dbpedia.org/resource/Berlin>  <http://dbpedia.org/ontology/country>  <http://dbpedia.org/resource/Germany>
 ```
 
-This triple says "Berlin's country is Germany." Every element is identified by a URI—a globally unique identifier, just like a web URL. This is what makes RDF powerful: any two datasets that refer to the same URI are automatically linked. You do not need a foreign key or a join table; the shared URI *is* the link.
+This triple says "Berlin's country is Germany." Every element is identified by a URI that is a globally unique identifier, like a web URL. This is what makes RDF powerful: any two datasets that refer to the same URI are automatically linked. You do not need a foreign key or a join table; the shared URI *is* the link.
 
-A collection of RDF triples forms a **knowledge graph**—a directed graph where subjects and objects are nodes, and predicates are the labeled edges connecting them. Knowledge graphs are a natural fit for representing the kind of interconnected, heterogeneous knowledge that the real world contains.
+A collection of RDF triples forms a **knowledge graph**, a directed graph where subjects and objects are nodes, and predicates are the labeled edges connecting them. Knowledge graphs are a natural fit for representing the kind of interconnected, heterogeneous knowledge that the real world contains.
 
 ### SPARQL: The Query Language
 
@@ -37,15 +37,15 @@ This query finds all entities typed as a City that have a population estimate, a
 
 ### Knowledge Graphs and AI
 
-Knowledge graphs are a cornerstone of knowledge representation in AI. While modern large language models store knowledge implicitly in neural network weights, knowledge graphs store it *explicitly* as structured, queryable facts. This makes them valuable for applications where you need precise, verifiable answers—not probabilistic guesses. Many AI systems use knowledge graphs alongside neural models: the graph provides factual grounding, while the model provides natural language understanding.
+Knowledge graphs are a cornerstone of knowledge representation in AI. While modern large language models store knowledge implicitly in neural network weights, knowledge graphs store it *explicitly* as structured, queryable facts. This makes them valuable for applications where you need precise, verifiable answers, not probabilistic guesses. Many AI systems use knowledge graphs alongside neural models: the graph provides factual grounding, while the model provides natural language understanding.
 
-DBPedia and Wikidata are two of the most important open knowledge graphs. DBPedia extracts structured data from Wikipedia infoboxes—those summary tables you see in the sidebar of Wikipedia articles. Wikidata is a collaboratively edited knowledge base maintained by the Wikimedia Foundation, and it serves as the structured data backbone for Wikipedia itself. Both expose SPARQL endpoints that anyone can query over HTTP.
+DBPedia and Wikidata are two of the most important open knowledge graphs. DBPedia extracts structured data from Wikipedia infoboxes, those summary tables you see in the sidebar of Wikipedia articles. Wikidata is a collaboratively edited knowledge base maintained by the Wikimedia Foundation, and it serves as the structured data backbone for Wikipedia itself. Both expose SPARQL endpoints that anyone can query over HTTP.
 
 ## DBPedia vs. Wikidata
 
 Our application supports both endpoints, and it is worth understanding how they differ:
 
-**DBPedia** extracts its data automatically from Wikipedia. Its URIs look like `http://dbpedia.org/resource/Berlin`, which map directly to Wikipedia article titles. DBPedia uses familiar RDF Schema predicates like `rdfs:label` and its own ontology namespace (`dbo:`, `dbp:`). Queries tend to be straightforward because the property names are human-readable. The downside is that DBPedia's data can be inconsistent—it inherits whatever quirks exist in Wikipedia's infoboxes—and its SPARQL endpoint can sometimes be slow or unavailable.
+**DBPedia** extracts its data automatically from Wikipedia. Its URIs look like `http://dbpedia.org/resource/Berlin`, which map directly to Wikipedia article titles. DBPedia uses familiar RDF Schema predicates like `rdfs:label` and its own ontology namespace (`dbo:`, `dbp:`). Queries tend to be straightforward because the property names are human-readable. The downside is that DBPedia's data can be inconsistent, it inherits whatever quirks exist in Wikipedia's infoboxes, and its SPARQL endpoint can sometimes be slow or unavailable.
 
 **Wikidata** is a first-class, curated knowledge base. Its URIs use opaque identifiers like `wd:Q64` (which happens to be Berlin) and `wdt:P1082` (which means "population"). This makes the queries harder to read at first glance, but the data quality is generally higher, and the query service is fast and reliable. Wikidata also provides a powerful `SERVICE wikibase:label` clause that automatically resolves those opaque identifiers into human-readable labels, which is extremely convenient.
 
@@ -73,7 +73,7 @@ semantic-web-app/
         └── lib.rs        ← Minimal Rust backend (Tauri shell)
 ```
 
-The architecture is simple by design. All the SPARQL logic lives in the frontend TypeScript—there are no Rust commands involved in querying. The Tauri shell provides the native window, and Vite handles the dev server and build pipeline. The `fetch` API makes HTTP requests directly to the SPARQL endpoints.
+The architecture is simple by design. All the SPARQL logic lives in the frontend TypeScript: there are no Rust commands involved in querying. The Tauri shell provides the native window, and Vite handles the dev server and build pipeline. The `fetch` API makes HTTP requests directly to the SPARQL endpoints.
 
 Let me note something about the Tauri configuration that matters for this application: the `security.csp` field is set to `null` in `tauri.conf.json`. This disables the Content Security Policy, which would otherwise block the cross-origin fetch requests to `dbpedia.org` and `wikidata.org`. In a production application, you would want to set a specific CSP that allows only those two origins. For a demo, disabling it keeps things simple.
 
@@ -83,7 +83,7 @@ Let us walk through the TypeScript code in `src/main.ts`. This file is 190 lines
 
 ### Type Definitions
 
-We start with TypeScript interfaces that model the SPARQL JSON results format. This is a standard format defined by the W3C—every SPARQL endpoint returns results in the same shape:
+We start with TypeScript interfaces that model the SPARQL JSON results format. This is a standard format defined by the W3C, every SPARQL endpoint returns results in the same shape:
 
 ```typescript
 type SparqlEndpoint = "dbpedia" | "wikidata";
@@ -109,7 +109,7 @@ interface SparqlResults {
 }
 ```
 
-The `SparqlEndpoint` type is a union of the two endpoint names we support. The `SparqlValue` interface represents a single value in a result row: it has a `value` string, a `type` (which is `"uri"`, `"literal"`, or `"typed-literal"`), and optional `datatype` and `xml:lang` fields for typed and language-tagged literals. The `SparqlBinding` interface is an index signature mapping variable names to their values—this models one row of results. Finally, `SparqlResults` wraps the whole response: `head.vars` lists the variable names (the column headers), and `results.bindings` is the array of rows.
+The `SparqlEndpoint` type is a union of the two endpoint names we support. The `SparqlValue` interface represents a single value in a result row: it has a `value` string, a `type` (which is `"uri"`, `"literal"`, or `"typed-literal"`), and optional `datatype` and `xml:lang` fields for typed and language-tagged literals. The `SparqlBinding` interface is an index signature mapping variable names to their values, this models one row of results. Finally, `SparqlResults` wraps the whole response: `head.vars` lists the variable names (the column headers), and `results.bindings` is the array of rows.
 
 I want to call your attention to the `undefined` in `SparqlBinding`. A binding can be missing for a given variable if that variable was matched in an `OPTIONAL` clause and no value was found. Our code needs to handle this gracefully, and you will see how `formatValue` does that shortly.
 
@@ -156,7 +156,7 @@ const DEFAULT_QUERIES: Record<SparqlEndpoint, string> = {
 This query demonstrates several SPARQL features:
 
 - **Triple patterns**: The first line matches entities whose `dbo:type` is `dbr:City`. The second matches entities that have a `dbp:populationEst` property.
-- **FILTER**: The `FILTER (lang(?dbpedia_label) = 'en')` clause restricts results to English-language labels. Without this, you would get labels in every language available in DBPedia—German, French, Japanese, and so on.
+- **FILTER**: The `FILTER (lang(?dbpedia_label) = 'en')` clause restricts results to English-language labels. Without this, you would get labels in every language available in DBPedia, e.g., German, French, Japanese, and so on.
 - **OPTIONAL**: The country lookup is wrapped in an `OPTIONAL` block. Not every city in DBPedia has a `dbo:country` link, so without `OPTIONAL` those cities would be excluded entirely. With it, they appear in the results with an empty country column.
 - **ORDER BY DESC** and **LIMIT**: We sort by population descending and take only the top 10.
 
@@ -176,7 +176,7 @@ This query demonstrates several SPARQL features:
 
 This query shows Wikidata's style. The identifiers are opaque: `wdt:P31` means "instance of," `wd:Q5` means "human," `wdt:P19` is "place of birth," `wdt:P569` is "date of birth," and `wdt:P106` is "occupation." You learn these by browsing Wikidata or using its search interface.
 
-The `SERVICE wikibase:label` clause is a Wikidata-specific extension. It is a **federated query** that calls a label-resolution service. When you include it, Wikidata automatically creates `*Label` versions of your variables (e.g., `?personLabel` from `?person`) that contain the human-readable English labels. Without this clause, you would see results like `wd:Q64` instead of "Berlin." The `SERVICE` keyword is part of the SPARQL standard for federated queries—queries that reach out to remote SPARQL endpoints during execution.
+The `SERVICE wikibase:label` clause is a Wikidata-specific extension. It is a **federated query** that calls a label-resolution service. When you include it, Wikidata automatically creates `*Label` versions of your variables (e.g., `?personLabel` from `?person`) that contain the human-readable English labels. Without this clause, you would see results like `wd:Q64` instead of "Berlin." The `SERVICE` keyword is part of the SPARQL standard for federated queries: queries that reach out to remote SPARQL endpoints during execution.
 
 Notice that the Wikidata query returns multiple rows even though we are asking about a single person. This is because Einstein had multiple occupations (physicist, philosopher, professor, etc.), and each one produces a separate row in the results. This is a natural consequence of the triple-based data model: there are multiple `wdt:P106` triples for Einstein, each pointing to a different occupation entity.
 
@@ -210,7 +210,7 @@ async function sparqlQuery(
 
 This is pleasantly simple. The SPARQL protocol specifies that you can send a query as a URL parameter named `query`, URL-encoded, via an HTTP GET request. The `Accept: application/sparql-results+json` header tells the endpoint to return results in JSON format rather than XML or CSV. The function URL-encodes the query, sends it with the appropriate headers, checks for HTTP errors, and parses the JSON response.
 
-I want to highlight that we are using the browser's built-in `fetch` API here. No SPARQL library, no RDF toolkit—just a plain HTTP request. SPARQL endpoints are designed to be accessed this way, and the JSON results format is simple enough that we can work with it directly using TypeScript interfaces. This is one of the beautiful things about the Semantic Web: the protocol is just HTTP, and the data format is just JSON.
+I want to highlight that we are using the browser's built-in `fetch` API here. No SPARQL library, no RDF toolkit, just a plain HTTP request. SPARQL endpoints are designed to be accessed this way, and the JSON results format is simple enough that we can work with it directly using TypeScript interfaces. This is one of the beautiful things about the Semantic Web: the protocol is just HTTP, and the data format is just JSON.
 
 ### URI Shortening
 
@@ -240,7 +240,7 @@ function shortenUri(value: string): string {
 }
 ```
 
-This function maps common URI prefixes to their standard abbreviations: `dbr:` for DBPedia resources, `dbo:` for DBPedia ontology terms, `dbp:` for DBPedia properties, `wd:` for Wikidata entities, and `wdt:` for Wikidata direct properties. So instead of displaying `http://dbpedia.org/resource/Berlin` in the results table, we display `dbr:Berlin`—much more readable.
+This function maps common URI prefixes to their standard abbreviations: `dbr:` for DBPedia resources, `dbo:` for DBPedia ontology terms, `dbp:` for DBPedia properties, `wd:` for Wikidata entities, and `wdt:` for Wikidata direct properties. So instead of displaying `http://dbpedia.org/resource/Berlin` in the results table, we display `dbr:Berlin` that is much more readable.
 
 Notice that we handle both `http://` and `https://` for DBPedia resources. DBPedia has historically used `http://` URIs, but some responses now include `https://` variants. This kind of real-world inconsistency is common when working with Semantic Web data, and handling it gracefully is part of building a robust client.
 
@@ -320,7 +320,7 @@ function renderResults(results: SparqlResults): string {
 }
 ```
 
-The column headers come from `results.head.vars`—the list of variable names from the `SELECT` clause. Each row in `results.results.bindings` is an object mapping variable names to their `SparqlValue`. The function iterates over the variables for each row, calls `formatValue` to produce a display string, and builds the table HTML.
+The column headers come from `results.head.vars`, the list of variable names from the `SELECT` clause. Each row in `results.results.bindings` is an object mapping variable names to their `SparqlValue`. The function iterates over the variables for each row, calls `formatValue` to produce a display string, and builds the table HTML.
 
 This approach is generic: it works with *any* SPARQL `SELECT` query, regardless of what variables are projected. You do not need to know the shape of the results at compile time. The table adapts automatically to whatever columns the query returns.
 
@@ -404,7 +404,7 @@ There are three things happening here:
 
 ## The HTML Shell
 
-The HTML file is minimal—just a form and a results container:
+	The HTML file is minimal. t isjust a form and a results container:
 
 ```html
 <!doctype html>
@@ -440,7 +440,7 @@ The HTML file is minimal—just a form and a results container:
 </html>
 ```
 
-The `<select>` dropdown lists the two endpoints. The `<textarea>` with 14 rows gives enough room to display multi-line SPARQL queries comfortably. The `#results` div is where the rendered table (or error messages) will be injected. Vite handles the TypeScript compilation and module loading—the `<script type="module">` tag references the `.ts` file directly, and Vite transforms it during development.
+The `<select>` dropdown lists the two endpoints. The `<textarea>` with 14 rows gives enough room to display multi-line SPARQL queries comfortably. The `#results` div is where the rendered table (or error messages) will be injected. Vite handles the TypeScript compilation and module loading using the `<script type="module">` tag that references the `.ts` file directly, and Vite transforms it during development.
 
 ## Running the Example
 
@@ -494,7 +494,7 @@ dbr:São_Paulo        São Paulo        12,252,023    Brazil
 dbr:Dhaka            Dhaka            10,278,882    Bangladesh
 ```
 
-Notice how the URI shortening makes the `city_uri` column readable (`dbr:Shanghai` instead of `http://dbpedia.org/resource/Shanghai`), and how the population numbers are formatted with thousand separators. The country labels come from the `OPTIONAL` clause—if a city did not have a `dbo:country` link, that column would be empty rather than the entire row being excluded.
+Notice how the URI shortening makes the `city_uri` column readable (`dbr:Shanghai` instead of `http://dbpedia.org/resource/Shanghai`), and how the population numbers are formatted with thousand separators. The country labels come from the `OPTIONAL` clause, e.g., if a city did not have a `dbo:country` link, that column would be empty rather than the entire row being excluded.
 
 You can also write your own SPARQL queries. Here are a few to try:
 
@@ -522,7 +522,7 @@ SELECT ?uni ?name WHERE {
 
 ## Wrap Up
 
-In about 190 lines of TypeScript, we have built a fully functional SPARQL client that can query two of the world's largest knowledge graphs. The implementation is deliberately minimal—no third-party SPARQL libraries, no complex state management, just the `fetch` API and some careful type definitions.
+In about 190 lines of TypeScript, we have built a fully functional SPARQL client that can query two of the world's largest knowledge graphs. The implementation is deliberately minimal with no third-party SPARQL libraries, no complex state management, just the `fetch` API and some careful type definitions.
 
 The key ideas to take away from this chapter are:
 
@@ -530,7 +530,7 @@ The key ideas to take away from this chapter are:
 - **SPARQL** is a pattern-matching query language. You describe the shape of the triples you want, and the engine finds all matches.
 - **Public SPARQL endpoints** like DBPedia and Wikidata are free to query. A polite User-Agent header and URL-encoded GET request are all you need.
 - **The JSON results format** is standardized by the W3C, so the same TypeScript interfaces work with any SPARQL endpoint.
-- **OPTIONAL clauses** prevent missing data from excluding entire rows—an important pattern when querying real-world knowledge graphs where data is often incomplete.
+- **OPTIONAL clauses** prevent missing data from excluding entire rows that is an important pattern when querying real-world knowledge graphs where data is often incomplete.
 - **URI shortening** transforms verbose identifiers into the compact prefix notation that makes SPARQL results human-readable.
 
 Knowledge graphs complement neural AI models beautifully. Where a language model might hallucinate a fact, a knowledge graph returns only what has been explicitly asserted and can be traced back to its source. As you build AI applications, consider using SPARQL queries against knowledge graphs as a way to ground your systems in verifiable, structured knowledge. The combination of a desktop Tauri shell and live SPARQL queries gives you a practical tool for exploring these massive knowledge bases interactively.

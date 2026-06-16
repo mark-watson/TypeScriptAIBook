@@ -80,10 +80,10 @@ Here is the complete source for `index.html`:
 ### Walkthrough
 
 - **Line 5**: We link to `/src/styles.css` to load our styling.
-- **Line 7**: We load `/src/main.ts` using `type="module"` and the `defer` attribute. During development, Vite intercepts this script request and delivers the compiled TypeScript directly to the browser view.
-- **Lines 12–24**: A layout of links and logo images showcasing the technologies used: Vite, Tauri, and TypeScript.
-- **Lines 26–29**: A simple `<form>` containing a text input field (`#greet-input`) and a submit button. Wrapping input fields in a form element is a best practice because it naturally handles the "Enter" keypress event to submit the value, rather than requiring us to write custom keydown event listeners.
-- **Line 30**: An empty paragraph element (`#greet-msg`) that will display the greeting text returned from the Rust backend once the form is submitted.
+- **Line 8**: We load `/src/main.ts` using `type="module"` and the `defer` attribute. During development, Vite intercepts this script request and delivers the compiled TypeScript directly to the browser view.
+- **Lines 12–23**: A layout of links and logo images showcasing the technologies used: Vite, Tauri, and TypeScript.
+- **Lines 25–28**: A simple `<form>` containing a text input field (`#greet-input`) and a submit button. Wrapping input fields in a form element is a best practice because it naturally handles the "Enter" keypress event to submit the value, rather than requiring us to write custom keydown event listeners.
+- **Line 29**: An empty paragraph element (`#greet-msg`) that will display the greeting text returned from the Rust backend once the form is submitted.
 
 ---
 

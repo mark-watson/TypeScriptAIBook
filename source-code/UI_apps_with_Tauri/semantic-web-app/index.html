@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Semantic Web SPARQL Client</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+
+  <body>
+    <main class="container">
+      <h1>Semantic Web SPARQL Client</h1>
+      <p>Query DBPedia or Wikidata using SPARQL.</p>
+
+      <form class="column" id="query-form">
+        <label for="endpoint-select">Endpoint</label>
+        <select id="endpoint-select">
+          <option value="dbpedia">DBPedia</option>
+          <option value="wikidata" selected>Wikidata</option>
+        </select>
+
+        <label for="query-input">SPARQL Query</label>
+        <textarea
+          id="query-input"
+          rows="14"
+          placeholder="Enter a SPARQL SELECT query..."
+        ></textarea>
+
+        <button type="submit">Run Query</button>
+      </form>
+
+      <div id="results"></div>
+    </main>
+  </body>
+</html>

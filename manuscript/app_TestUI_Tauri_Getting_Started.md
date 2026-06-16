@@ -154,10 +154,10 @@ export default defineConfig(async () => ({
 
 #### Walkthrough
 - **Line 3**: When running on mobile devices or network interfaces, Tauri sets the `TAURI_DEV_HOST` environment variable to notify Vite of the host address.
-- **Line 7**: We set `clearScreen: false` so that compilation output from both Vite and Cargo (Rust's build tool) remains visible in the terminal.
+- **Line 6**: We set `clearScreen: false` so that compilation output from both Vite and Cargo (Rust's build tool) remains visible in the terminal.
 - **Line 9**: We lock the dev server to port `1420` so that Tauri's backend knows exactly where to load the UI during development.
 - **Line 10**: We enforce `strictPort: true` so Vite will fail immediately instead of automatically choosing another port if `1420` is already in use.
-- **Line 13**: We instruct Vite's file watcher to ignore changes inside `src-tauri/`. Without this, editing Rust backend files would cause Vite to rebuild the frontend, resulting in redundant compiler overhead.
+- **Line 12**: We instruct Vite's file watcher to ignore changes inside `src-tauri/`. Without this, editing Rust backend files would cause Vite to rebuild the frontend, resulting in redundant compiler overhead.
 
 ### Tauri Configuration
 
@@ -191,9 +191,9 @@ Here is the key configuration chunk:
 ```
 
 #### Walkthrough
-- **Lines 5–10**: Under `build`, we specify the shell commands Tauri should run. When we launch Tauri in dev mode, it runs `npm run dev` (Vite) and connects the desktop window webview to `http://localhost:1420`. When bundling the final app, it runs `npm run build` and loads the resulting assets from the `../dist` directory.
-- **Lines 11–15**: The `app` block configures the window. We create a window titled `"testui"` with dimensions `800x600`.
-- **Lines 16–20**: The `bundle` configuration defines icons and packaging parameters. When building, Tauri packages our application into native installers (`.app` on macOS, `.msi` on Windows, and `.deb` on Linux).
+- **Lines 5–11**: Under `build`, we specify the shell commands Tauri should run. When we launch Tauri in dev mode, it runs `npm run dev` (Vite) and connects the desktop window webview to `http://localhost:1420`. When bundling the final app, it runs `npm run build` and loads the resulting assets from the `../dist` directory.
+- **Lines 12–16**: The `app` block configures the window. We create a window titled `"testui"` with dimensions `800x600`.
+- **Lines 17–21**: The `bundle` configuration defines icons and packaging parameters. When building, Tauri packages our application into native installers (`.app` on macOS, `.msi` on Windows, and `.deb` on Linux).
 
 ---
 

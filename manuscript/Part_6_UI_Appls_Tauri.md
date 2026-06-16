@@ -1,5 +1,7 @@
 # Part 6: Writing Apps Using Tauri
 
+**Note: Dear Reader, I use macOS for my development. That said Tauri is fully cross-platform. It is not restricted to macOS. It provides native support for Windows, Linux, macOS, and as of Tauri v2, iOS and Android.**
+
 For building web and macOS apps with TypeScript in 2026, Tauri is the definitive framework for a clean, minimalist approach.
 Tauri flips the Electron model. Instead of shipping a browser, it renders your TypeScript web UI using macOS's native webview. The resulting desktop applications are incredibly small (often under 10MB) and launch almost instantly.
 Because Tauri compiles down to native binaries, it runs exceptionally efficiently on Apple Silicon. Whether you are running services on a Mac Mini or developing on an M4 Air, it leverages the local hardware without the thermal and memory overhead associated with Chromium-based wrappers.
@@ -11,5 +13,5 @@ How it works:
 
 **The Minimalist Dev Setup**
 
-To keep the development environment as simple as possible, avoid massive meta-frameworks. The cleanest modern stack is Tauri + Vite + Svelte + TypeScript.
+To keep the development environment as simple as possible, avoid massive meta-frameworks. In my opinion, dear reader, the cleanest modern stack is Tauri + Vite + Svelte + TypeScript.
 Vite provides a lightning-fast development server with instant hot-module replacement. Svelte is incredibly lean; unlike React, it doesn't ship a bulky virtual DOM to the browser, compiling your UI down to highly optimized vanilla JavaScript. It perfectly mirrors Tauri's philosophy of doing more with less.

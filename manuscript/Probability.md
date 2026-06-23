@@ -427,3 +427,37 @@ The key takeaways are:
 - **Statistical significance ≠ practical significance.** A tiny p-value tells you an association exists; it does not tell you the association is large or useful.
 - **Correlation ≠ causation, and even correlation ≠ reliable individual prediction.** The Pearson-r between test results and disease is real but insufficient for clinical decision-making.
 - **Both frameworks have their place.** Bayesian methods shine when prior information matters; frequentist methods dominate regulatory and large-sample settings. Pragmatic practitioners use both.
+
+## Optional Practice Problems
+
+To reinforce the concepts covered in this chapter, try solving the following practice problems using the probability toolkit in `source-code/probability`.
+
+### 1. Bayesian Spam Filter
+Create a script (e.g., `examples/spam_filter.ts`) that uses the `bayes.ts` module to build a simple spam classifier.
+* **Setup**: Assume the prior probability of any incoming email being spam is 20%.
+* **Likelihoods**: 
+  - The probability of the word "free" appearing in a spam email is 90%.
+  - The probability of "free" appearing in a legitimate email (ham) is 5%.
+* **Task**: Use [makeBayesModel](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/bayes.ts#L14) and [update](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/bayes.ts#L23) to compute the posterior probability that an email containing the word "free" is indeed spam. What is the MAP (maximum a posteriori) hypothesis?
+
+### 2. Pearson vs. Spearman Correlation
+Write a script that demonstrates the difference between linear and monotonic-only correlation.
+* **Data**: Create two arrays:
+  - `xs = [1, 2, 3, 4, 5]`
+  - `ys = [1, 10, 100, 1000, 10000]`
+* **Task**: Use [pearsonR](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/correlation.ts#L49) and [spearmanRho](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/correlation.ts#L58) from `correlation.ts` to calculate both correlation coefficients for `xs` and `ys`.
+* **Reflection**: Why does Spearman's rank correlation yield a perfect `1.0` while Pearson's $r$ is lower? What does this tell you about the sensitivity of Pearson's $r$ to non-linear exponential relationships?
+
+### 3. Response Time Hypothesis Testing
+Using the `frequentist.ts` module, write a script to run a one-sample $t$-test.
+* **Data**: Suppose you measure the response times of a local SLM (in milliseconds) over 8 runs and get: `[120, 135, 150, 110, 125, 140, 130, 145]`.
+* **Null Hypothesis ($H_0$)**: The true mean response time of the model is 140 ms.
+* **Task**: Use [tTestOneSample](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/frequentist.ts#L70) to perform the test. Print the resulting $z$-statistic and $p$-value.
+* **Interpretation**: At a significance level of $\alpha = 0.05$, do you reject or fail to reject the null hypothesis?
+
+### 4. Adjusting Confidence Intervals
+Investigate the effect of confidence levels on interval width.
+* **Setup**: In a user survey, 65 out of 100 respondents preferred your local agent over a cloud alternative.
+* **Task**: Use [confidenceIntervalProportion](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/probability/frequentist.ts#L108) to calculate the confidence interval for the true proportion of preference at the 90%, 95%, and 99% confidence levels.
+* **Analysis**: Print all three intervals and compare their widths. What is the relationship between the level of confidence and the width of the confidence interval?
+

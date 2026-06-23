@@ -153,3 +153,24 @@ Classification Report:
 
 I have already admitted my personal biases in favor of deep learning over simpler machine learning and I proved that by implementing a single KNN classifier from scratch in this chapter. The advantage of TypeScript here is that the implementation is clear, type-safe, and requires zero external dependencies. In the next chapters we will use more sophisticated approaches.
 
+## Optional Practice Problems
+
+To solidify your understanding of classic machine learning and the K-NN implementation in TypeScript, try working through the following practice problems using the code in `source-code/machine-learning`:
+
+1. **Hyperparameter Tuning ($k$-value Sweep)**:
+   Write a script that executes the classification workflow over a range of different neighborhood sizes (e.g., $k \in [1, 15]$). Collect the test accuracy for each $k$, print a summary table, and determine which value of $k$ yields the highest accuracy on the test set.
+
+2. **Implementing Alternative Distance Metrics**:
+   The current classifier uses Euclidean distance to find the nearest neighbors. Modify [classification.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/machine-learning/classification.ts) to support alternative distance metrics:
+   - **Manhattan Distance ($L_1$ Norm)**: The sum of absolute differences between coordinate points.
+   - **Cosine Similarity**: The cosine of the angle between two multi-dimensional vectors.
+   Compare the accuracy, precision, and recall of these metrics against Euclidean distance using the same breast cancer dataset.
+
+3. **Weighted K-NN Classifier**:
+   By default, all $k$ nearest neighbors get an equal vote regardless of their distance from the test sample. Modify the voting logic in the prediction function to weight each neighbor's vote by the inverse of their distance ($w_i = \frac{1}{d_i + \epsilon}$, where $\epsilon$ is a small constant like $10^{-5}$ to prevent division by zero). Compare the performance of the weighted K-NN model against the unweighted implementation.
+
+4. **Robust CSV Parsing and Error Handling**:
+   The simple parser in [loadData.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/machine-learning/loadData.ts) throws an error if any cell is non-numeric. Extend the parser to gracefully handle missing values or corrupted rows by:
+   - Skipping rows with malformed or missing target classes.
+   - Imputing missing feature values (e.g., substituting the column average calculated from the rest of the dataset) instead of crashing.
+

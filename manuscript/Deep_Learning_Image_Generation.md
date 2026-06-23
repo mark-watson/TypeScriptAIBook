@@ -75,3 +75,9 @@ For more advanced image generation, explore:
 - [Stable Diffusion XL (SDXL)](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0) for higher quality image generation.
 - The [Hugging Face Inference API](https://huggingface.co/docs/api-inference/) for running models without local GPU requirements.
 
+## Optional Practice Problems
+
+1. **Dynamic Command-Line Prompts**: Modify the `image_generation.ts` script to accept the image generation prompt as a command-line argument using `process.argv`. Fall back to a default prompt if the user does not provide one.
+2. **Parameter Exploration**: The example uses `num_inference_steps: 25` and the model `stabilityai/stable-diffusion-xl-base-1.0`. Experiment with changing the model (for example, trying `runwayml/stable-diffusion-v1-5`) and adjusting the number of inference steps (e.g., 10 vs. 50). How do these changes affect the execution time and the details in the generated image?
+3. **Dynamic Output Naming**: To avoid overwriting `generated_landscape.png` on each run, update the code to generate unique filenames automatically. You could slugify the prompt (e.g., converting spaces to hyphens) or append a timestamp/random seed to the filename.
+4. **Explore Image-to-Text**: Using the `@huggingface/inference` SDK, write a new script that performs image-to-text inference (image captioning). Read a local image file and send it to a model like `Salesforce/blip-image-captioning-large` to print a description of the image to the console.

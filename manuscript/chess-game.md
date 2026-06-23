@@ -611,3 +611,24 @@ The design principles at work here apply far beyond chess:
 5. **Cache results.** The transposition table eliminates redundant work when the same position is reached through different move sequences.
 
 There are many ways to extend this engine, null move pruning, killer move heuristics, principal variation search, UCI protocol support for GUI integration, and an opening book are all natural next steps. But the core search architecture described here is the same one used by high-performance engines: the difference is in the details, not the design.
+
+## Optional Practice Problems
+
+To deepen your understanding of search algorithms, evaluation heuristics, and game engine mechanics, try implementing the following enhancements in the [source-code/chess-game](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game) codebase:
+
+1. **Move History and Undo Command**
+   - **Task**: Modify the interactive game loop in [cli.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/cli.ts) to support an `undo` or `takeback` command.
+   - **Details**: Maintain a history of executed moves and their corresponding states. When the user types `undo`, revert the board state twice (once for the AI's move and once for the player's move) using the [unmakeMove](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/engine.ts#L511) function on the board.
+
+2. **The Bishop Pair Bonus**
+   - **Task**: Improve position evaluation in [ai.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/ai.ts) by adding a bishop pair bonus.
+   - **Details**: In chess, having both bishops is generally considered advantageous as they cover opposite-colored diagonals. Check the active pieces for each side in [pieces](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/engine.ts#L153). If a side has two or more bishops, add a bonus (e.g., 30 to 50 centipawns) to that side's evaluation score.
+
+3. **Time-Limited Search**
+   - **Task**: Modify [getBestMove](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/ai.ts#L257) in [ai.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/ai.ts) to accept a search time limit rather than just a fixed depth.
+   - **Details**: Upgrade the iterative deepening loop to check the elapsed search time. If the time limit is exceeded, abort the search and return the best move found in the previous fully completed search depth.
+
+4. **Testing Edge Cases with Kiwipete Perft**
+   - **Task**: Expand [perft.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/chess-game/src/perft.ts) to test a highly tactical position.
+   - **Details**: The standard chess opening position doesn't test many complex situations. Add a test case for the "Kiwipete" position: `r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1`. Verify that depth 1 produces exactly 48 nodes, depth 2 produces 2,039 nodes, and that Zobrist hashes remain perfectly synchronized.
+

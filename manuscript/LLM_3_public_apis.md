@@ -522,3 +522,13 @@ TypeScript is an excellent language for LLM API integration, the official SDKs f
 
 In the next chapter we cover the alternative approach: running open-weights models locally on your own hardware, which offers privacy, no per-token cost, and offline operation at the expense of model capability and the need for suitable hardware.
 
+
+## Optional Practice Problems
+
+Here are some exercises to help you practice integrating public LLM APIs into your TypeScript applications:
+
+1. **Adaptive Temperature Sandbox**: Write a CLI tool (e.g., `compare_temp.ts`) that takes a single user prompt and generates three responses using different temperatures: `0.2` (focused), `0.7` (balanced), and `1.2` (creative). Compare and print the outputs, analyzing how the temperature level influences style, detail, and predictability.
+2. **Robust JSON Validator and Auto-Retry**: Modify `gemini_structured.ts` to define a strict TypeScript interface for the expected JSON structure. Implement a parser wrapper that validates the parsed object. If the JSON structure is invalid or keys are missing, automatically retry the API request by appending the previous invalid output and a correction message to the history.
+3. **Multimodal Image Inspector**: Create a CLI script that takes an image file and a specific question about the image (e.g., `"Count the number of items of type X"` or `"Is there any text in this image?"`). Run the request using Gemini's multimodal capabilities, and print a structured summary of the findings.
+4. **Conversational Math Tutor with Reasoning**: Combine the concepts of multi-turn conversations (`gemini_conversation.ts`) and thinking mode (`gemini_thinking.ts`). Build a chat loop where the user presents a mathematical or logic puzzle. Configure the model to use thinking mode to solve the problem step-by-step internally, but instruct the model to only give the user a helpful hint rather than the final answer.
+5. **CLI Shell Copilot via Tool Calling**: Build upon `gemini_tools.ts` or `openai_tools.ts` by introducing a tool called `execute_safe_command` (which runs a shell command and returns its output, restricted to safe commands like `git status`, `npm run build`, or `npm test`). Ask the model to fix a linting error or run a compilation command and report the output, executing a recursive tool-calling loop until the command passes.

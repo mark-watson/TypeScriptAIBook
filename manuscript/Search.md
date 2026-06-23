@@ -239,3 +239,26 @@ Because DFS explores paths systematically, it immediately finds the path `A -> B
 ## Wrap-up
 
 Depth-First Search is a foundational search algorithm. While it is memory-efficient compared to Breadth-First Search (BFS) for deep trees, it does not guarantee finding the *shortest* path (which BFS or Dijkstra's algorithm would). In the next chapter, we will build on search concepts to implement a chess engine using alpha-beta pruning, where the search space is dynamically evaluated to make intelligent game decisions.
+
+## Optional Practice Problems
+
+1. **Implement Breadth-First Search (BFS)**:
+   While Depth-First Search (DFS) is recursive and memory-efficient, it does not guarantee finding the shortest path (in terms of the number of edges) in a graph. Implement a method `findPathBFS(startNode: string, goalNode: string): string[] | null` in the `Graph` class. Use a queue to keep track of the search frontier and compare its path result with DFS on the example graph.
+
+2. **Weighted Edges and Dijkstra's Algorithm**:
+   In many real-world AI search problems, transitions between states have costs (e.g., distance, time, or energy). Update the `Edge` interface and `Graph` class to support weighted edges:
+   ```typescript
+   interface Edge {
+     from: string;
+     to: string;
+     weight: number;
+   }
+   ```
+   Then, implement Dijkstra's algorithm `findCheapestPath(startNode: string, goalNode: string): { path: string[]; cost: number } | null` to find the path with the lowest cumulative edge weight.
+
+3. **Find All Paths**:
+   Sometimes we need to present multiple path options to a user or evaluate all alternatives. Implement a method `findAllPaths(startNode: string, goalNode: string): string[][]` that returns a list of all simple (cycle-free) paths from the start node to the goal node.
+
+4. **Cycle Detection**:
+   Cycles can pose challenges for many graph traversal and topological sorting algorithms. Write a helper method `hasCycle(): boolean` that analyzes the graph and returns `true` if there is at least one cycle (a path that can lead back to the start node of that path) in the graph, and `false` otherwise.
+

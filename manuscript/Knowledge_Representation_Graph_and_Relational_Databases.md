@@ -238,3 +238,16 @@ We will combine the use of SQLite, RDF, SPARQL, and deep learning NLP libraries 
 
 If you want to deepen your understanding of the standards behind the SPARQL queries we used in this chapter, the next chapter provides optional reference material on RDF data formats, RDFS sub-property hierarchies, the SPARQL query language in detail, and OWL reasoning.
 
+## Optional Practice Problems
+
+1. **Extending the Wikidata Query**
+   Modify `wikidata_person.ts` to query for another prominent scientist or historical figure (e.g., "Ada Lovelace" or "Alan Turing"). Update the SPARQL query to retrieve their date of death (`wdt:P570`) and their doctoral advisor (`wdt:P184`), making sure to use `OPTIONAL` clauses and resolving the labels to English.
+
+2. **Filtering DBpedia Cities**
+   Modify the SPARQL query in `dbpedia_cities.ts` to retrieve only cities belonging to a specific country (e.g., Japan or the United States) by specifying a value constraint on the `country` property. Additionally, filter the results to only include cities with a population greater than 1,000,000.
+
+3. **Extending the Relational Schema**
+   Extend the database schema in `sqlite_knowledge.ts` to include a new table for `institutions` (representing universities or research labs, such as "Caltech" or "Sorbonne University"). Create a junction table (e.g., `scientist_institution`) to represent where scientists worked. Insert relevant records for the existing scientists, and write a query to list all scientists associated with a specific institution.
+
+4. **Indirect Relationships in SQLite**
+   Write a query in `sqlite_knowledge.ts` to find "indirect connections" between scientists. Specifically, find pairs of scientists who do not share any fields directly, but are connected because they both share a field with a mutual colleague.

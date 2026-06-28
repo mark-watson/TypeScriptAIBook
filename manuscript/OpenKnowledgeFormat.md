@@ -521,3 +521,13 @@ Here are two suggested projects for you, dear reader, to further experiment with
 - **Project 1: Automatic OKF Generators.** Write a Python pipeline script that inspects a SQLite, PostgreSQL or BigQuery schema, extracts the column names and comments, and automatically generates or updates the frontmatter and schema tables in `bundle/tables/<table_name>.md`.
 - **Project 2: Vector Search for OKF Bundles.** Replace the simple substring-matching index in `KnowledgeBundle.search()` with a vector database. Write a script to generate text embeddings for each concept using an Ollama embedding model (like `nomic-embed-text`) and perform semantic retrieval instead of keyword search.
 
+## Optional Practice Problems
+
+Here are some practice problems to help you test and expand your understanding of the Open Knowledge Format (OKF) Bundle Explorer:
+
+- **Problem 1: Dynamic Schema Validation.** The current simple YAML parser does not validate the frontmatter fields. Enhance the `Concept` class (or write a separate validator using a library like Zod) to verify that concepts of a specific type contain required fields (e.g., ensuring `Database Table` concepts have a `resource` field and `Metric` concepts have a `tags` array).
+- **Problem 2: Bundle Integrity and Reference Validator.** Create a tool that validates the consistency of the bundle. It should read `bundle/index.md`, confirm that all referenced markdown files actually exist, and check if concept markdown bodies contain broken relative links or mention missing concepts.
+- **Problem 3: Concept Dependency Graph.** Analyze the concept bodies and frontmatter to discover relationships (e.g., playbooks referencing metrics, or metrics referencing tables). Write a function `generateDependencyGraph()` that extracts these connections and outputs a dynamic Mermaid graph representation of the bundle.
+- **Problem 4: Interactive CLI Explorer.** The current driver script runs a predefined array of queries. Modify the script to run an interactive terminal loop (using Node's `readline` module) allowing you to search by keyword, view concept details, or ask the agent custom questions dynamically.
+
+

@@ -203,3 +203,28 @@ In this chapter we covered two fundamental machine learning techniques beyond cl
 
 Together with the classification example in the previous chapter, you now have hands-on experience with the three core tasks of classic machine learning, all implemented from scratch in TypeScript. In the next chapter we will explore the data preparation work that comes *before* training any model.
 
+## Optional Practice Problems
+
+1. **Ridge Regression (L2 Regularization)**:
+   The current linear regression implementation in [regression.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/regression_and_clustering/regression.ts) uses the normal equation:
+   $$w = (X^T X)^{-1} X^T y$$
+   In practice, if features are highly correlated (collinear) or data is scarce, $X^T X$ may be close to singular, causing numerical instability. Ridge regression addresses this by adding a regularization penalty $\lambda$ to the diagonal of $X^T X$ before inversion:
+   $$w = (X^T X + \lambda I)^{-1} X^T y$$
+   where $I$ is the identity matrix (typically leaving the bias term weight $w_0$ unregularized). Modify the `linearRegression` function to support Ridge regression. Experiment with different $\lambda$ values (e.g., `0.1`, `1.0`, `10.0`) and compare the resulting test metrics (MAE, RMSE, $R^2$) and the magnitude of the feature coefficients.
+
+2. **Gradient Descent Solver**:
+   Calculating the normal equation directly requires computing a matrix inversion, which scales as $O(d^3)$ with the number of features $d$. For high-dimensional datasets, Gradient Descent is a more scalable alternative. Implement linear regression using gradient descent:
+   - Implement a function `linearRegressionGD(X: Matrix, y: Vector, learningRate: number, epochs: number): Vector` that iteratively updates the model weights to minimize Mean Squared Error (MSE).
+   - Test your solver on the housing dataset and compare the final weights and training time with the closed-form normal equation solver.
+
+3. **K-Means++ Initialization**:
+   The K-Means implementation in [clustering.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/regression_and_clustering/clustering.ts) initializes centroids by choosing $k$ random samples. This simple approach can lead to sub-optimal local minima depending on the initialization. The K-Means++ algorithm selects the first centroid at random, and then selects subsequent centroids with a probability proportional to their squared distance to the nearest existing centroid.
+   - Implement K-Means++ initialization.
+   - Compare the average number of iterations required to converge and the average silhouette scores achieved using K-Means++ versus random initialization over 50 runs.
+
+4. **Alternative Distance Metrics for K-Means**:
+   The current clustering implementation uses squared Euclidean distance to assign points to centroids. In some domains, alternative metrics like Manhattan distance ($L_1$ norm) or Cosine distance are more effective.
+   - Refactor the `kMeans` function to accept a customizable distance function.
+   - Implement Manhattan distance and Cosine distance.
+   - Run the clustering algorithm with these metrics on the Iris dataset and compare their resulting cluster assignments and silhouette scores against Euclidean distance.
+

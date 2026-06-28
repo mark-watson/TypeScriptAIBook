@@ -184,3 +184,30 @@ In this chapter we covered the essential data preparation skills that precede mo
 
 These techniques apply to every machine learning project, whether you are using classic algorithms or deep learning frameworks. In the next part of this book, we move into deep learning.
 
+## Optional Practice Problems
+
+1. **Z-Score Outlier Detection**
+   The Exploratory Data Analysis script ([eda.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/data_analysis_and_feature_engineering/eda.ts)) uses the Interquartile Range (IQR) method to count outliers. Write an alternative function, `countOutliersZScore(values: number[], threshold = 3.0): number`, that flags values as outliers if their absolute Z-score is greater than the specified threshold:
+   $$z = \frac{x - \mu}{\sigma}$$
+   Compare the outlier counts and percentages between the IQR method and the Z-score method (with a threshold of 3.0) for the `Population` and `AveOccup` columns.
+
+2. **Outlier Filtering and Imputation**
+   Instead of just identifying outliers, we often need to handle them before model training. Extend [eda.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/data_analysis_and_feature_engineering/eda.ts) to implement two handling strategies:
+   - **Trimming (Removal)**: Write a function that filters out any rows where the target value (`MedHouseVal`) is an outlier according to the IQR method.
+   - **Winsorization (Capping)**: Write a function that replaces outlier values with the nearest non-outlier boundary (i.e., values below $Q1 - 1.5 \times IQR$ are set to $Q1 - 1.5 \times IQR$, and values above $Q3 + 1.5 \times IQR$ are set to $Q3 + 1.5 \times IQR$).
+   Evaluate how each strategy impacts the correlation of features with `MedHouseVal`.
+
+3. **Min-Max Scaling**
+   The feature engineering script ([feature_engineering.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/data_analysis_and_feature_engineering/feature_engineering.ts)) implements standard scaling (Z-score normalization). Write a Min-Max scaler utility:
+   ```typescript
+   function fitMinMax(data: Matrix) { /* ... */ }
+   function applyMinMax(data: Matrix, scaler: { mins: Vector, maxs: Vector }): Matrix { /* ... */ }
+   ```
+   This scaler should map all features to the range $[0, 1]$ using the formula:
+   $$x_{\text{scaled}} = \frac{x - x_{\text{min}}}{x_{\text{max}} - x_{\text{min}}}$$
+   Retrain the linear regression model using Min-Max scaling on the original features. Does it achieve the same $R^2$ score as standard scaling? Why or why not?
+
+4. **Logarithmic Feature Transformation**
+   Features like `Population` and `AveOccup` are highly right-skewed. Apply a log transform $x \to \ln(x + 1)$ to these two columns. 
+   - Compute the correlation of the log-transformed `Population` with `MedHouseVal` and compare it to the correlation of the original feature.
+   - Add these log-transformed columns to your feature matrix, train the linear regression model, and measure the impact on the $R^2$ score.

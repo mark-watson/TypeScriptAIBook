@@ -520,4 +520,30 @@ If you need to build a production recommendation system, consider these resource
 - For TypeScript-native solutions at scale, implement the models in this chapter using TensorFlow.js on Node.js to leverage GPU acceleration.
 - A research idea: transform input training data to a textual representation for input to a Transformer model, based on the paper [Behavior Sequence Transformer for E-commerce Recommendation in Alibaba](https://arxiv.org/abs/1905.06874).
 
+## Optional Practice Problems
 
+To solidify your understanding of collaborative filtering and embedding-based recommendation systems, try the following exercises using the code in [collaborative_filtering.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/deep_learning_recommendation/collaborative_filtering.ts) and [recommendation_demo.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/deep_learning_recommendation/recommendation_demo.ts):
+
+### 1. Dynamic Learning Rate Decay
+In the [EmbeddingRecommender](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/deep_learning_recommendation/recommendation_demo.ts#L90) class, the learning rate `lr` is static (defaulting to `0.005`) throughout all epochs of stochastic gradient descent. Modify the training loop in the `fit` method to implement a learning rate decay schedule (for example, multiplying `lr` by a decay factor like `0.95` at the end of each epoch, or using `lr_epoch = lr / (1 + decay * epoch)`). 
+- Run the demo with and without decay.
+- Observe how it affects the training RMSE trajectory and the final test set MAE/RMSE.
+
+### 2. Similarity Thresholding in Collaborative Filtering
+In [ItemBasedRecommender.fit](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/deep_learning_recommendation/collaborative_filtering.ts#L74), the algorithm pre-computes the top-K most similar items. However, some of these neighbors might have extremely low similarity scores, which can introduce noise into the predictions in `predict()`.
+- Modify the `fit` method or the `predict` method to filter out neighbors with an adjusted cosine similarity below a specific threshold (e.g., `similarity < 0.1`).
+- Evaluate the model on the test dataset and note how this thresholding affects both the prediction accuracy (MAE/RMSE) and the model's **coverage** metric.
+
+### 3. Intelligent Cold-Start Handling
+In the current implementation of [EmbeddingRecommender.predict](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/deep_learning_recommendation/recommendation_demo.ts#L171), if a user or item was not seen during training, the model simply falls back to returning the `globalMean`.
+- Refactor the fallback logic in `predict()` to be more context-aware:
+  - If the user is known but the item is new/unseen, predict `globalMean + userBias`.
+  - If the item is known but the user is new/unseen, predict `globalMean + itemBias`.
+  - If both are unseen, return `globalMean`.
+- Write a small test script to verify that your refactored `predict()` behaves as expected for unseen IDs.
+
+### 4. Incorporating Item Popularity Bias
+Highly active users and very popular items can dominate recommendation results. Add a popularity adjustment feature to the recommendation ranking in either model.
+- Calculate the popularity of each item (e.g., the number of ratings it has received in the training set).
+- Modify the `recommend()` method to adjust the final prediction score with a small popularity bonus: `adjustedScore = predictedScore + alpha * log(popularity)`.
+- Experiment with different values of `alpha` and observe how the recommendations shift between niche items and popular blockbusters.

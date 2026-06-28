@@ -326,4 +326,37 @@ This technique works best when you have many normal examples and relatively few 
 
 The code in this chapter can be applied to any numeric dataset where you need to detect outliers or unusual patterns. The algorithm is also fast, training on 648 examples completes in milliseconds, and scoring a new sample requires only a single pass through the feature vector.
 
+## Optional Practice Problems
+
+Here are some practice problems to help solidify your understanding of anomaly detection:
+
+1. **Maximum F1-Score for Threshold Tuning**
+   Currently, the [train](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L100-L112) function in [detector.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts) tunes the epsilon threshold by minimizing the total classification errors on the cross-validation set:
+   ```typescript
+   if (anomaly ? prob > epsilon : prob < epsilon) errors++;
+   ```
+   For highly imbalanced datasets, minimizing total errors can lead to a trivial detector (e.g., predicting everything as normal).
+   *Task*: Modify the [trainHelper](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L66-L76) function and update [train](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L100-L112) to select the threshold `epsilon` that maximizes the **F1 score** on the cross-validation set, rather than minimizing the raw error count. Make sure to handle edge cases like division by zero when calculating precision or recall.
+
+2. **Independent Joint Probability (Product of PDFs)**
+   The current [gaussianP](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L47-L55) function calculates the arithmetic mean of the Gaussian probability densities across features:
+   ```typescript
+   let sum = 0;
+   // ...
+   sum += (1 / (SQRT_2_PI * Math.sqrt(s2))) * Math.exp(-(d * d) / (2 * s2));
+   // ...
+   return sum / nf;
+   ```
+   Mathematically, assuming features are conditionally independent, the joint probability is the product of their individual probabilities: $p(x) = \prod_{j=1}^{n} p(x_j; \mu_j, \sigma_j^2)$. To prevent numerical underflow with small probabilities, we typically sum the log-probabilities:
+   $$\log p(x) = \sum_{j=1}^{n} \log\left( p(x_j; \mu_j, \sigma_j^2) \right)$$
+   *Task*: Re-implement [gaussianP](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L47-L55) to compute the sum of log-probabilities instead of the average probability density. Update the rest of the detection pipeline (including the threshold sweep range in [train](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L100-L112)) to work with log-probability thresholds.
+
+3. **Standardizing Column Normalization (Z-Score)**
+   In [wisconsin_demo.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/wisconsin_demo.ts), the data is preprocessed using per-row min-max normalization in [preprocessWisconsin](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/wisconsin_demo.ts#L14-L28). While this scales features for each sample individually, it does not normalize the distribution of features across the entire dataset. In practice, Z-score standardization (normalizing each feature column to have a mean of 0 and a variance of 1) is a common alternative.
+   *Task*: Implement Z-score standardization for the dataset. Ensure that the mean and variance are computed using *only the training set*, and then apply this transformation to the training, cross-validation, and test sets to prevent data leakage.
+
+4. **Deterministic Data Splitting**
+   The data splitting function [splitData](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L13-L24) in [detector.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts) relies on `Math.random()`, which means runs are non-deterministic, and the train/validation/test sets change every time the script is executed.
+   *Task*: Update [splitData](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/anomaly_detection/detector.ts#L13-L24) to support a deterministic split, either by implementing a simple pseudorandom number generator (PRNG) with a seed or by splitting the data sequentially or in a stratified manner based on a fixed ratio. Verify that your implementation consistently produces the same evaluation metrics across runs.
+
 

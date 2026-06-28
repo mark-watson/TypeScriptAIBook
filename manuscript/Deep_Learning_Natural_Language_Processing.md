@@ -174,3 +174,13 @@ In this chapter we have seen examples of how effective deep learning is for NLP 
 
 I worked on other methods of NLP over a 25-year period and I ask you, dear reader, to take my word on this: deep learning has revolutionized NLP and for almost all practical NLP applications, deep learning libraries and pre-trained models from organizations like Hugging Face should be the first thing that you consider using.
 
+## Optional Practice Problems
+
+Here are a few optional practice problems to help you apply the concepts covered in this chapter:
+
+1. **Semantic FAQ Matcher**: Build a simple command-line semantic search tool. Define a map of common FAQ questions to their respective answers (e.g., `"What is your return policy?" => "You can return any product within 30 days."`). Write a script that takes a user query (e.g., `"How do I get a refund?"`), generates its embedding, computes the cosine similarity against the embeddings of all the FAQ questions, and returns the answer of the most similar question.
+2. **Multi-Length Text Summarization**: Extend the text summarization example to generate summaries of three different lengths (short, medium, and long). Modify the input text to be a longer passage (e.g., a news article of 300–400 words) and experiment with parameters like `max_length`, `min_length`, and `num_beams` to compare how the generated summaries differ in structure and detail.
+3. **Sentiment Analysis via Zero-Shot Classification**: Zero-shot classification models can be used for sentiment detection without training a dedicated sentiment analysis model. Write a script that takes a list of short customer reviews (both positive and negative) and classifies them using the candidate labels `["positive", "negative", "neutral"]`. Print the predicted sentiment and the confidence score for each review.
+4. **Multi-Label Article Tagging**: Build an automatic tagger for news headlines using the zero-shot classifier. Given a headline (e.g., `"Tech giants announce new AI chips amidst rising global trade tensions"`), evaluate it against a set of topic labels such as `["technology", "finance", "politics", "sports", "entertainment"]`. Filter the results to output all labels that exceed a confidence threshold of `0.3`, allowing a headline to be associated with multiple tags simultaneously.
+
+

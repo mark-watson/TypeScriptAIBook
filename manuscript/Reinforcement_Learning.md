@@ -198,3 +198,30 @@ If this chapter sparked your interest, I encourage you to work through the Cours
 
 I tagged this chapter as optional material because I believe most readers will get more immediate value from mastering deep learning and pre-trained models. But if you find yourself working on sequential decision-making problems, robotics, game AI, resource allocation, dynamic pricing, the RL toolkit becomes indispensable.
 
+## Optional Practice Problems
+
+To solidify your understanding of Markov Decision Processes (MDPs) and Q-learning, try implementing the following exercises using the code files in [source-code/reinforcement_learning](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/reinforcement_learning):
+
+1. **Investigating Environment Stochasticity (FrozenLake)**
+   In [frozen_lake_qlearning.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/reinforcement_learning/frozen_lake_qlearning.ts), the `FrozenLake` class has a `slippery` parameter (default `true`) that introduces randomness in action execution.
+   - Modify the training script to run with `slippery = false`.
+   - Compare the number of training episodes needed to reach a stable success rate of `1.0` vs. the slippery version.
+   - Explain why the non-slippery version converges faster.
+
+2. **Shortest Path Incentives via Step Penalties**
+   Currently, in [frozen_lake_qlearning.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/reinforcement_learning/frozen_lake_qlearning.ts), the reward is only received upon reaching the goal (`1.0`), and normal cells give `0.0` reward. This means the agent has no incentive to find the fastest path, only a safe one.
+   - Modify the `step` function to return a small negative reward (a "step penalty" of `-0.01` or `-0.02`) for transitions that do not end in a hole (`H`) or the goal (`G`).
+   - Run the Q-learning algorithm again and observe if the average number of steps taken to reach the goal decreases.
+
+3. **Analyzing Discount Factors in Value Iteration**
+   In [mdp_demo.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/reinforcement_learning/mdp_demo.ts), value iteration is executed with a discount factor of `gamma = 0.9`.
+   - Run the script with different values of `gamma`, such as `0.1` (highly short-sighted agent) and `0.99` (highly long-sighted agent).
+   - Document how these changes affect:
+     1. The final optimal policy.
+     2. The values assigned to the states.
+     3. The number of iterations required for convergence.
+
+4. **Adding Obstacles/Holes to Grid World MDP**
+   The 3×3 grid world in [mdp_demo.ts](file:///Users/markwatson/GITHUB/TypeScriptAIBook/source-code/reinforcement_learning/mdp_demo.ts) has a goal state at index 8 (reward `10`) and a penalty state at index 5 (reward `-5`).
+   - Introduce a new "obstacle" state at index 4 (the center cell) which the agent cannot walk through (i.e., any action trying to enter state 4 leaves the agent in its current state, and if the agent starts in state 4, it cannot leave).
+   - Adjust the transition probability array `P` to enforce this obstacle boundary, run `valueIteration`, and print the updated optimal policy.
